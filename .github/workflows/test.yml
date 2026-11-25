@@ -1,0 +1,55 @@
+# 每次開 PR 或推送到 main 時，自動執行全部測試（只測試，不部署）
+name: Tests
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Check generated files are up to date
+        run: |
+          node tools/gen-cards.mjs
+          node tools/build-manifest.mjs
+          git diff --exit-code -- cards precache-manifest.js || (echo "牌圖或快取清單與原始碼不一致：請執行 node tools/gen-cards.mjs 與 node tools/build-manifest.mjs 後再提交" && exit 1)
+      - name: Start static server
+        run: |
+          python3 -m http.server 8123 >/dev/null 2>&1 &
+          for i in $(seq 1 20); do curl -s -o /dev/null http://localhost:8123/ && break; sleep 1; done
+      - name: e2e
+        run: node tests/e2e.cjs
+      - name: features
+        run: node tests/features.cjs
+      - name: backup
+        run: node tests/backup.cjs
+      - name: ui
+        run: node tests/ui.cjs
+      - name: content
+        run: node tests/content.cjs
+      - name: extras
+        run: node tests/extras.cjs
+      - name: update
+        run: node tests/update.cjs
+      - name: Upload screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: tests/screenshots
+          retention-days: 7

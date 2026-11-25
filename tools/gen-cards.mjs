@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import * as A from './art-lib.mjs';
 
 const { C, g, tr, P, Ci, El, L, R, line, sky, ground, hills, mountains, sea, pool, path, cloud, sun, moon, star, tree, pillar, tower, castle,
-  crownShape, lemniscate, rose, lily, flowers, wheat, sunflower, bird, birdV, wings, rainbow, lightning, flame, wreath, ribbon, I, figure, backFigure,
+  crownShape, lemniscate, town, vines, swag, fence, islands, farHills, rose, lily, flowers, wheat, sunflower, bird, birdV, wings, rainbow, lightning, flame, wreath, ribbon, I, figure, backFigure,
   lion, dog, horse, sphinx, crayfish, snake, salamander, throne, table, boat, ship, bed, coffin, wall, archway, window, handFromCloud, frame, svgDoc } = A;
 const { INK, WINE, WINED, GOLD, GOLDL, PARCH, PARCH2, SKIN, WHITE, DARK, BLUE, BLUEL, GREEN, GREENL, STONE, STONED, BROWN, ROSE, SAND, NIGHT } = C;
 
@@ -299,9 +299,10 @@ const MINOR = {
 
 // 把天空裝飾插在第一個背景圖層之後
 function injectSky(body, deco) {
-  const i = body.indexOf('fill="url(#hz)"/>');
+  // 白天與夜空的排線底紋屬性不同，找到底紋後的第一個結尾再插入
+  const i = body.indexOf('fill="url(#hz)"');
   if (i < 0) return deco + body;
-  const j = i + 'fill="url(#hz)"/>'.length;
+  const j = body.indexOf('/>', i) + 2;
   return body.slice(0, j) + deco + body.slice(j);
 }
 
@@ -347,6 +348,32 @@ function back() {
   return svgDoc(s);
 }
 
+// 各張牌的背景場景（插在天空之後、主體之前）
+const EXTRA = {
+  m01: () => vines('both', 70, 360),
+  m03: () => farHills(300, GREENL),
+  m08: () => castle(48, 300, 0.55) + birdV(230, 90) + birdV(246, 100, 0.8),
+  m11: () => '',
+  m14: () => vines('left', 120, 400),
+  c02: () => farHills(345, GREENL) + tree(40, 372, 0.55) + tree(262, 370, 0.6) + birdV(70, 90) + birdV(86, 82, 0.8),
+  c03: () => farHills(400, GREENL) + town(408, 150, 280) + sun(56, 80, 18, { rays: 16 }) + cloud(220, 110, 70),
+  c04: () => farHills(368, BLUEL) + birdV(200, 120) + birdV(216, 130, 0.8),
+  c09: () => swag(WINE) + town(232, 20, 280),
+  c11: () => islands(358),
+  c13: () => islands(400),
+  s02: () => islands(330),
+  s05: () => town(330, 160, 280, STONE),
+  w02: () => farHills(332, BLUEL),
+  w07: () => farHills(360, BLUEL) + castle(250, 350, 0.45),
+  w09: () => town(420, 20, 280, STONE) + farHills(410, SAND),
+  w11: () => farHills(368, '#c9a26a'),
+  p03: () => vines('both', 120, 470),
+  p06: () => town(330, 20, 120) + town(330, 190, 280),
+  p07: () => farHills(380, BLUEL) + fence(436, 20, 160) + town(380, 200, 280, STONE),
+  p11: () => fence(470, 20, 280),
+  p12: () => farHills(380, BLUEL)
+};
+
 const SPARSE = ['w02', 'w03', 'w04', 'w05', 'w06', 'w09', 'w10', 'w11', 'w12', 'w13', 'w14', 's11', 's12', 's13', 's14', 'c11', 'c12', 'c13', 'p02', 'p04', 'p07', 'p08', 'p09', 'p11', 'p12', 'p14', 's08', 'c06', 'c04'];
 function skyDeco(id) {
   const n = parseInt(id.slice(1), 10) + id.charCodeAt(0);
@@ -359,13 +386,14 @@ function skyDeco(id) {
 
 let count = 0;
 for (const [id, fn] of Object.entries(MAJOR)) {
-  const body = fn(), opt = { numeral: parseInt(id.slice(1), 10) };
+  const body = EXTRA[id] ? injectSky(fn(), EXTRA[id]()) : fn(), opt = { numeral: parseInt(id.slice(1), 10) };
   writeFileSync(join(out, id + '.svg'), svgDoc(frame(body, opt)));
   writeFileSync(join(out, 'rv', id + '.svg'), svgDoc(frame(body, { ...opt, rev: true })));
   count++;
 }
 for (const [id, fn] of Object.entries(MINOR)) {
-  const body = SPARSE.includes(id) ? injectSky(fn(), skyDeco(id)) : fn();
+  const deco = (SPARSE.includes(id) ? skyDeco(id) : '') + (EXTRA[id] ? EXTRA[id]() : '');
+  const body = deco ? injectSky(fn(), deco) : fn();
   const opt = { suit: { w: 'wands', c: 'cups', s: 'swords', p: 'pentacles' }[id[0]], court: parseInt(id.slice(1), 10) >= 11 };
   writeFileSync(join(out, id + '.svg'), svgDoc(frame(body, opt)));
   writeFileSync(join(out, 'rv', id + '.svg'), svgDoc(frame(body, { ...opt, rev: true })));

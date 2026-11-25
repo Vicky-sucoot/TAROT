@@ -6,6 +6,7 @@
   var KEY_FORMAT = 'yuexia.cardFormat';
   var KEY_DATE = 'yuexia.cardDate';
   var KEY_DAILY = 'yuexia.daily';
+  var KEY_DAILY_LOG = 'yuexia.dailyLog';
   var PALETTES = ['wine', 'parchment', 'navy'];
   var memory = {};
 
@@ -27,7 +28,8 @@
 
   function newestFirst(a, b) { return b.ts - a.ts; }
 
-  var Store = {
+  var Store;
+  Store = {
     list: function (category) {
       var all = loadHistory().sort(newestFirst);
       if (!category || category === 'all') return all;
@@ -61,7 +63,7 @@
     all: function () { return loadHistory(); },
     // 清除本網站在這台裝置上保存的所有資料
     clearAll: function () {
-      [KEY_HISTORY, KEY_PALETTE, KEY_FORMAT, KEY_DATE, KEY_DAILY].forEach(function (k) {
+      [KEY_HISTORY, KEY_PALETTE, KEY_FORMAT, KEY_DATE, KEY_DAILY, KEY_DAILY_LOG].forEach(function (k) {
         delete memory[k];
         try { root.localStorage.removeItem(k); } catch (e) { /* 忽略 */ }
       });
@@ -90,7 +92,35 @@
     getDaily: function (dateKey) {
       try { var d = JSON.parse(get(KEY_DAILY) || 'null'); return d && d.date === dateKey ? d : null; } catch (e) { return null; }
     },
-    setDaily: function (d) { set(KEY_DAILY, JSON.stringify(d)); }
+    setDaily: function (d) {
+      set(KEY_DAILY, JSON.stringify(d));
+      Store.logDaily(d);
+    },
+    // 今日指引紀錄：{ 'YYYY-MM-DD': { id, rev, mood?, moodTs? } }
+    getDailyLog: function () {
+      try { var o = JSON.parse(get(KEY_DAILY_LOG) || '{}'); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; } catch (e) { return {}; }
+    },
+    logDaily: function (d) {
+      var log = Store.getDailyLog();
+      if (!log[d.date]) { log[d.date] = { id: d.id, rev: !!d.rev }; set(KEY_DAILY_LOG, JSON.stringify(log)); }
+    },
+    setDailyMood: function (date, text) {
+      var log = Store.getDailyLog();
+      if (!log[date]) return false;
+      if (text) { log[date].mood = text; log[date].moodTs = Date.now(); } else { delete log[date].mood; delete log[date].moodTs; }
+      return set(KEY_DAILY_LOG, JSON.stringify(log));
+    },
+    // 匯入：只補上還沒有的日期；同一天同一張牌而本機沒有心情時補上心情
+    importDailyLog: function (incoming) {
+      var log = Store.getDailyLog(), added = 0;
+      Object.keys(incoming).forEach(function (k) {
+        var e = incoming[k];
+        if (!log[k]) { log[k] = e; added++; }
+        else if (!log[k].mood && e.mood && log[k].id === e.id) { log[k].mood = e.mood; log[k].moodTs = e.moodTs; }
+      });
+      set(KEY_DAILY_LOG, JSON.stringify(log));
+      return added;
+    }
   };
 
   root.STORE = Store;

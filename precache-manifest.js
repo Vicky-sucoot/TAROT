@@ -1,6 +1,6 @@
 /* 自動產生，請勿手動修改：node tools/build-manifest.mjs */
 self.PRECACHE = {
-  "version": "0036e3394444",
+  "version": "656735e84c4b",
   "files": [
     "./",
     "index.html",
@@ -11,6 +11,7 @@ self.PRECACHE = {
     "js/cards-data.js",
     "js/combos.js",
     "js/offline.js",
+    "js/public-lines.js",
     "js/reading.js",
     "js/resultcard.js",
     "js/store.js",

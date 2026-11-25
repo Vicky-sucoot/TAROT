@@ -40,6 +40,7 @@
     <!-- 首頁 -->
     <section class="view" id="view-home" data-title="月下占卜">
       <div class="hero">
+        <div class="twinkle" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <img class="hero-emblem" src="icons/emblem.svg" alt="" width="120" height="120">
         <h1 class="hero-title">月下占卜</h1>
         <p class="hero-tagline">在月光下，聽見自己的答案</p>
@@ -167,7 +168,10 @@
     <section class="view" id="view-history" hidden>
       <div class="view-head-row">
         <h2 class="view-heading">歷史紀錄</h2>
-        <button class="btn btn-ghost btn-small" type="button" id="btn-stats">我的統計</button>
+        <div class="head-btns">
+          <button class="btn btn-ghost btn-small" type="button" id="btn-journal">每日紀錄</button>
+          <button class="btn btn-ghost btn-small" type="button" id="btn-stats">我的統計</button>
+        </div>
       </div>
       <div class="chips filter-chips" id="history-filters" role="radiogroup" aria-label="主題篩選"></div>
       <label class="search-field">
@@ -197,6 +201,13 @@
       <h2 class="view-heading">我的統計</h2>
       <p class="view-sub">依照這台裝置上已儲存的占卜紀錄計算。</p>
       <div id="stats-body"></div>
+    </section>
+
+    <!-- 今日指引紀錄 -->
+    <section class="view" id="view-journal" hidden>
+      <h2 class="view-heading">今日指引紀錄</h2>
+      <p class="view-sub">每天抽的牌與心情，都會記在這個月曆上。點有牌的日子可以查看與修改心情。</p>
+      <div id="journal-body"></div>
     </section>
 
     <!-- 設定 -->
@@ -326,6 +337,7 @@
 <script src="js/cards-data.js"></script>
 <script src="js/topic-meanings.js"></script>
 <script src="js/combos.js"></script>
+<script src="js/public-lines.js"></script>
 <script src="js/reading.js"></script>
 <script src="js/store.js"></script>
 <script src="js/resultcard.js"></script>

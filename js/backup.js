@@ -79,13 +79,27 @@
     return rec;
   }
 
-  function build(records, settings) {
+  function cleanDailyLog(o) {
+    var out = {};
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return out;
+    Object.keys(o).slice(0, 5000).forEach(function (k) {
+      var e = o[k];
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !e || typeof e.id !== 'string' || !T.BY_ID[e.id]) return;
+      var c = { id: e.id, rev: e.rev === true };
+      if (typeof e.mood === 'string' && e.mood.trim()) { c.mood = e.mood.slice(0, 200); c.moodTs = isFinite(Number(e.moodTs)) ? Number(e.moodTs) : 0; }
+      out[k] = c;
+    });
+    return out;
+  }
+
+  function build(records, settings, dailyLog) {
     return {
       format: FORMAT,
       version: VERSION,
       exportedAt: Date.now(),
       settings: settings || {},
-      records: records
+      records: records,
+      dailyLog: dailyLog || {}
     };
   }
 
@@ -107,7 +121,7 @@
       format: s.format === 'square' || s.format === 'portrait' ? s.format : null,
       showDate: typeof s.showDate === 'boolean' ? s.showDate : null
     };
-    return { records: records, skipped: skipped, settings: settings, exportedAt: Number(data.exportedAt) || null };
+    return { records: records, skipped: skipped, settings: settings, dailyLog: cleanDailyLog(data.dailyLog), exportedAt: Number(data.exportedAt) || null };
   }
 
   root.BACKUP = { build: build, parse: parse, cleanRecord: cleanRecord };

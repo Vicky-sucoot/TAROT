@@ -242,7 +242,21 @@
       }
       ctx.fillStyle = pal.text;
       ctx.font = '700 ' + Lo.guideSize + 'px ' + FONT_SERIF;
-      var lines = wrap(ctx, data.publicLine, Lo.guideMax).slice(0, Lo.guideLines);
+      var lines = wrap(ctx, data.publicLine, Lo.guideMax);
+      if (lines.length === 2) {
+        // 兩行時平均分配長度，避免第二行只剩一兩個字
+        var half = ctx.measureText(data.publicLine).width / 2 + Lo.guideSize * 0.6;
+        var balanced = wrap(ctx, data.publicLine, Math.min(Lo.guideMax, half));
+        if (balanced.length === 2) lines = balanced;
+        // 中間附近有逗號時，優先在逗號後換行
+        var chars = Array.from(data.publicLine), mid = chars.length / 2, best = -1;
+        chars.forEach(function (ch, i) { if ((ch === '，' || ch === '；') && Math.abs(i + 1 - mid) <= 4 && (best < 0 || Math.abs(i + 1 - mid) < Math.abs(best - mid))) best = i + 1; });
+        if (best > 0) {
+          var a1 = chars.slice(0, best).join(''), a2 = chars.slice(best).join('');
+          if (ctx.measureText(a1).width <= Lo.guideMax && ctx.measureText(a2).width <= Lo.guideMax) lines = [a1, a2];
+        }
+      }
+      lines = lines.slice(0, Lo.guideLines);
       lines.forEach(function (ln, i) { ctx.fillText(ln, 540, Lo.guideY + i * Lo.guideSize * 1.56); });
 
       // 頁尾

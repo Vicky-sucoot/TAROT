@@ -61,8 +61,8 @@ async function pngSize(page) {
   ok(await page.textContent('.daily-name') === name1, '同一天重新開啟，仍是同一張牌');
   ok(await page.locator('#btn-daily').count() === 0, '同一天不能重抽');
   if (d1.rev) {
-    const tr = await page.$eval('#daily-front img', (e) => getComputedStyle(e).transform);
-    ok(tr === 'matrix(-1, 0, 0, -1, 0, 0)', '今日的牌為逆位時插畫旋轉 180 度');
+    const src = await page.$eval('#daily-front img', (e) => e.getAttribute('src'));
+    ok(/^cards\/rv\//.test(src), '今日的牌為逆位時使用逆位圖');
   }
   // 模擬隔天
   await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('yuexia.daily')); d.date = '2000-01-01'; localStorage.setItem('yuexia.daily', JSON.stringify(d)); });
@@ -87,8 +87,10 @@ async function pngSize(page) {
   const detail = await page.textContent('#card-body');
   ok(/高塔/.test(detail) && /正位/.test(detail) && /逆位/.test(detail) && /突然變動/.test(detail), '單張頁顯示牌名與正逆位牌義');
   await page.click('[data-orient="rv"]');
-  const rotated = await page.waitForFunction(() => getComputedStyle(document.getElementById('card-detail-img')).transform === 'matrix(-1, 0, 0, -1, 0, 0)', null, { timeout: 3000 }).then(() => true, () => false);
-  ok(rotated, '切換逆位時大圖旋轉 180 度');
+  ok(/^cards\/rv\/m16\.svg$/.test(await page.getAttribute('#card-detail-img', 'src')), '切換逆位時顯示逆位圖');
+  await page.click('[data-orient="up"]');
+  ok(/^cards\/m16\.svg$/.test(await page.getAttribute('#card-detail-img', 'src')), '切回正位');
+  await page.click('[data-orient="rv"]');
   await page.screenshot({ path: path.join(SHOTS, 'f03-card.png'), fullPage: true });
   await page.click('#card-next');
   ok(/星星/.test(await page.textContent('#card-body')), '「下一張」切換到星星');

@@ -26,9 +26,14 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
     <div class="topbar-title" id="topbar-title">月下占卜</div>
-    <button class="topbar-home" id="btn-home" type="button" aria-label="回首頁" hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-    </button>
+    <div class="topbar-end">
+      <button class="topbar-home" id="btn-home" type="button" aria-label="回首頁" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="topbar-home" id="btn-settings" type="button" aria-label="設定">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
   </header>
 
   <main id="main">
@@ -78,29 +83,26 @@
         <button class="btn btn-ghost" type="button" id="btn-share-site">分享網站</button>
       </div>
 
-      <div class="panel offline-panel" id="offline-panel">
-        <div class="offline-row">
+      <div class="offline-compact" id="offline-panel">
+        <button type="button" class="offline-row offline-line" id="offline-line" aria-label="離線使用狀態，前往設定">
           <span class="offline-dot" id="offline-dot" aria-hidden="true"></span>
           <span class="offline-text" id="offline-text">正在檢查離線狀態…</span>
-        </div>
+          <span class="offline-go" aria-hidden="true">›</span>
+        </button>
         <div class="offline-progress" id="offline-progress" hidden><div class="offline-bar" id="offline-bar"></div></div>
         <button class="btn btn-small" type="button" id="btn-offline-retry" hidden>重試離線準備</button>
       </div>
 
       <details class="panel install-guide" id="install-guide">
         <summary>加入 iPhone 主畫面</summary>
-        <p class="standalone-note" id="standalone-note" hidden>你目前正在使用主畫面版本。</p>
         <ol>
           <li>用 iPhone 的 <b>Safari</b> 開啟本網站。</li>
           <li>點下方工具列的「分享」按鈕（方框加向上箭頭）。</li>
           <li>往下滑，選擇「加入主畫面」，名稱保持「月下占卜」，點「新增」。</li>
           <li><b>重要：</b>安裝後，請在<b>連線狀態</b>下從主畫面開啟一次，等首頁顯示「已可離線使用」，就完成離線準備了。</li>
         </ol>
-        <p class="note">提醒：在 iPhone 上，Safari 與主畫面版本的儲存空間彼此分開，占卜紀錄與結果卡配色不會互通。建議固定使用其中一個入口。</p>
+        <p class="note">提醒：在 iPhone 上，Safari 與主畫面版本的儲存空間彼此分開，占卜紀錄與結果卡配色不會互通。可以用「設定」裡的備份與還原把紀錄搬過去。</p>
       </details>
-
-      <p class="privacy-note">免登入。你的提問與紀錄只保存在這台裝置，不會上傳。</p>
-      <p class="footer-links"><a href="docs/credits.html">牌義參考與授權說明</a></p>
     </section>
 
     <!-- 設定：主題／情境＋提問 -->
@@ -168,19 +170,13 @@
         <button class="btn btn-ghost btn-small" type="button" id="btn-stats">我的統計</button>
       </div>
       <div class="chips filter-chips" id="history-filters" role="radiogroup" aria-label="主題篩選"></div>
+      <label class="search-field">
+        <span class="visually-hidden">搜尋紀錄</span>
+        <input type="search" id="history-search" placeholder="搜尋提問、選項、筆記或牌名" autocomplete="off" enterkeyhint="search">
+      </label>
       <ul class="history-list" id="history-list"></ul>
       <p class="empty" id="history-empty" hidden></p>
-      <section class="panel backup-panel" aria-labelledby="backup-title">
-        <h3 class="backup-title" id="backup-title">備份與還原</h3>
-        <p class="note">把這台裝置上的占卜紀錄、回顧筆記與結果卡設定存成一個檔案，可以存到 iCloud 雲碟或「檔案」App。換手機、清除瀏覽器資料，或想把 Safari 的紀錄搬到主畫面版本時，再用「匯入紀錄」還原。已經存在的紀錄不會重複匯入。</p>
-        <div class="backup-actions">
-          <button class="btn btn-ghost" type="button" id="btn-export">匯出紀錄</button>
-          <button class="btn btn-ghost" type="button" id="btn-import">匯入紀錄</button>
-        </div>
-        <input type="file" id="import-file" accept="application/json,.json" hidden>
-        <p class="note">備份檔只在你的裝置上產生，不會上傳。檔案裡有你的提問與筆記，請自行妥善保管。</p>
-      </section>
-      <p class="note">紀錄只保存在這台裝置的目前瀏覽器中。iPhone 上，Safari 與主畫面版本的紀錄、配色分開保存，彼此看不到。</p>
+      <p class="note">紀錄只保存在這台裝置的目前瀏覽器中。iPhone 上，Safari 與主畫面版本的紀錄、配色分開保存，彼此看不到。要備份或搬移紀錄，請到 <button type="button" class="link-btn" id="history-to-settings">設定</button> 的「備份與還原」。</p>
     </section>
 
     <!-- 牌卡圖鑑 -->
@@ -201,6 +197,73 @@
       <h2 class="view-heading">我的統計</h2>
       <p class="view-sub">依照這台裝置上已儲存的占卜紀錄計算。</p>
       <div id="stats-body"></div>
+    </section>
+
+    <!-- 設定 -->
+    <section class="view" id="view-settings" hidden>
+      <h2 class="view-heading">設定</h2>
+
+      <section class="panel settings-panel" aria-labelledby="set-offline-title">
+        <h3 class="backup-title" id="set-offline-title">離線使用</h3>
+        <div class="offline-row">
+          <span class="offline-dot" id="set-offline-dot" aria-hidden="true"></span>
+          <span class="offline-text" id="set-offline-text">正在檢查離線狀態…</span>
+        </div>
+        <div class="offline-progress" id="set-offline-progress" hidden><div class="offline-bar" id="set-offline-bar"></div></div>
+        <button class="btn btn-small" type="button" id="set-offline-retry" hidden>重試離線準備</button>
+        <p class="note">全部牌圖、牌義與程式都下載到這台裝置後，才會顯示「已可離線使用」。之後沒有網路也能占卜、查看紀錄和下載結果卡。</p>
+      </section>
+
+      <details class="panel install-guide">
+        <summary>加入 iPhone 主畫面</summary>
+        <p class="standalone-note" id="standalone-note" hidden>你目前正在使用主畫面版本。</p>
+        <ol>
+          <li>用 iPhone 的 <b>Safari</b> 開啟本網站。</li>
+          <li>點下方工具列的「分享」按鈕（方框加向上箭頭）。</li>
+          <li>往下滑，選擇「加入主畫面」，名稱保持「月下占卜」，點「新增」。</li>
+          <li><b>重要：</b>安裝後，請在<b>連線狀態</b>下從主畫面開啟一次，等首頁顯示「已可離線使用」，就完成離線準備了。</li>
+        </ol>
+        <p class="note">提醒：在 iPhone 上，Safari 與主畫面版本的儲存空間彼此分開，占卜紀錄與結果卡配色不會互通。</p>
+      </details>
+
+      <section class="panel backup-panel settings-panel" aria-labelledby="backup-title">
+        <h3 class="backup-title" id="backup-title">備份與還原</h3>
+        <p class="note">把這台裝置上的占卜紀錄、回顧筆記與結果卡設定存成一個檔案，可以存到 iCloud 雲碟或「檔案」App。換手機、清除瀏覽器資料，或想把 Safari 的紀錄搬到主畫面版本時，再用「匯入紀錄」還原。已經存在的紀錄不會重複匯入。</p>
+        <div class="backup-actions">
+          <button class="btn btn-ghost" type="button" id="btn-export">匯出紀錄</button>
+          <button class="btn btn-ghost" type="button" id="btn-import">匯入紀錄</button>
+        </div>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+        <p class="note">備份檔只在你的裝置上產生，不會上傳。檔案裡有你的提問與筆記，請自行妥善保管。</p>
+      </section>
+
+      <section class="panel settings-panel" aria-labelledby="set-card-title">
+        <h3 class="backup-title" id="set-card-title">結果卡預設</h3>
+        <p class="note">預覽結果卡時也可以隨時更改，這裡的選擇會被記住。</p>
+        <div class="set-group" role="radiogroup" aria-label="預設配色">
+          <button type="button" class="set-opt" data-set-palette="wine" role="radio">酒紅古金</button>
+          <button type="button" class="set-opt" data-set-palette="parchment" role="radio">羊皮紙米白</button>
+          <button type="button" class="set-opt" data-set-palette="navy" role="radio">深藍星空</button>
+        </div>
+        <div class="set-group set-group-2" role="radiogroup" aria-label="預設尺寸">
+          <button type="button" class="set-opt" data-set-format="portrait" role="radio">直式</button>
+          <button type="button" class="set-opt" data-set-format="square" role="radio">方形（IG）</button>
+        </div>
+        <label class="date-toggle set-date"><input type="checkbox" id="set-show-date"> 在結果卡顯示占卜日期</label>
+      </section>
+
+      <section class="panel settings-panel" aria-labelledby="set-privacy-title">
+        <h3 class="backup-title" id="set-privacy-title">資料與隱私</h3>
+        <p class="note">免登入。你的提問、感情情境、選項名稱、回顧筆記與占卜紀錄只保存在這台裝置的網站儲存空間，不會上傳到任何伺服器，也不會寫進網址。分享網站時只分享公開首頁；分享用的結果卡不含提問與感情情境。</p>
+        <button class="btn btn-ghost btn-danger btn-block" type="button" id="btn-clear-all">清除這台裝置上的所有資料</button>
+      </section>
+
+      <section class="panel settings-panel" aria-labelledby="set-about-title">
+        <h3 class="backup-title" id="set-about-title">關於</h3>
+        <p class="note">月下占卜・在月光下，聽見自己的答案。塔羅解讀僅供自我覺察參考，不構成醫療、法律或投資建議。</p>
+        <p class="note"><a href="docs/credits.html">牌義參考與授權說明</a></p>
+        <p class="note">版本：<span id="app-version"></span></p>
+      </section>
     </section>
 
     <!-- 單筆紀錄 -->

@@ -59,6 +59,13 @@
       return found && saveHistory(list);
     },
     all: function () { return loadHistory(); },
+    // 清除本網站在這台裝置上保存的所有資料
+    clearAll: function () {
+      [KEY_HISTORY, KEY_PALETTE, KEY_FORMAT, KEY_DATE, KEY_DAILY].forEach(function (k) {
+        delete memory[k];
+        try { root.localStorage.removeItem(k); } catch (e) { /* 忽略 */ }
+      });
+    },
     // 匯入：依 id 合併，已存在的紀錄不覆蓋
     importMany: function (records) {
       var list = loadHistory(), ids = {}, added = 0, dup = 0;

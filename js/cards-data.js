@@ -426,7 +426,9 @@
       rank: parseInt(r[0].slice(1), 10),
       up: { k: r[3].split('、'), m: r[4] },
       rv: { k: r[5].split('、'), m: r[6] },
-      img: 'cards/' + r[0] + '.svg'
+      img: 'cards/' + r[0] + '.svg',
+      // 逆位圖：金框保持正向，只有框內插畫旋轉 180 度
+      imgRv: 'cards/rv/' + r[0] + '.svg'
     };
   });
 

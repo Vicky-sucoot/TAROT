@@ -184,7 +184,6 @@ textarea::placeholder, input[type="text"]::placeholder { color: #8f7a63; }
 .face img { display: block; width: 100%; height: 100%; }
 .face-front { transform: rotateY(180deg); }
 /* 逆位：只旋轉插畫，文字保持正向 */
-.art-rev { transform: rotate(180deg); }
 .tile-cap { text-align: center; margin-top: 6px; min-height: 3.2em; }
 .tile-name { display: block; font-family: var(--serif); font-size: 17px; font-weight: 700; color: var(--parch); line-height: 1.35; }
 .ori { display: inline-block; margin-top: 3px; padding: 0 9px; border-radius: 999px; font-size: 13px; line-height: 1.7; font-weight: 700; }
@@ -326,7 +325,8 @@ textarea::placeholder, input[type="text"]::placeholder { color: #8f7a63; }
 }
 
 /* 頂部按鈕隱藏時保留位置，避免標題擠到左側 */
-.topbar > .topbar-back[hidden], .topbar > .topbar-home[hidden] { display: grid !important; visibility: hidden; }
+.topbar > .topbar-back[hidden] { display: grid !important; visibility: hidden; }
+.topbar-end { justify-self: end; display: flex; }
 
 /* ── 二選一欄位 ── */
 .choice-fields { display: grid; gap: 0; }
@@ -403,3 +403,30 @@ input[type="text"] { min-height: 48px; }
 .note-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
 .reading-block .btn-primary { min-height: 44px; }
 .hi-tag.hi-noted { background: var(--wine); color: var(--gold-soft); border: 1px solid var(--gold); }
+
+/* ── 首頁精簡的離線狀態 ── */
+.offline-compact { margin: 6px 0 12px; }
+.offline-line { width: 100%; min-height: 44px; border: 0; background: transparent; color: var(--text-soft); cursor: pointer; padding: 6px 4px; text-align: left; font-size: 15px; }
+.offline-line .offline-text { font-size: 15px; flex: 1; }
+.offline-go { color: var(--gold-soft); font-size: 20px; }
+
+/* ── 設定 ── */
+.settings-panel { margin: 14px 0; }
+.set-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+.set-group-2 { grid-template-columns: 1fr 1fr; }
+.set-opt { min-height: 46px; border-radius: 10px; border: 1px solid rgba(201, 164, 92, 0.6); background: rgba(0, 0, 0, 0.2); color: var(--parch); font-size: 15px; font-weight: 600; cursor: pointer; }
+.set-opt[aria-checked="true"] { background: var(--parch); color: var(--wine); border-color: var(--gold); }
+.set-date input { accent-color: var(--gold); }
+#app-version { font-variant-numeric: tabular-nums; }
+
+/* ── 歷史搜尋與標籤 ── */
+.search-field { display: block; margin: -4px 0 14px; }
+.search-field input {
+  width: 100%; min-height: 46px; border-radius: 999px; border: 1px solid var(--gold-deep); padding: 8px 18px;
+  background: var(--parch); color: var(--ink); font-size: 16px;
+}
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.hi-tags { display: flex; flex-wrap: nowrap; gap: 6px; margin: 2px 0; overflow: hidden; }
+.hi-tags .hi-tag { margin-left: 0; white-space: nowrap; }
+.toast-action { margin-left: 12px; background: none; border: 1px solid var(--gold); color: var(--gold-soft); border-radius: 999px; padding: 2px 12px; font-size: 15px; min-height: 32px; cursor: pointer; }
+.toast { display: flex; align-items: center; justify-content: center; }

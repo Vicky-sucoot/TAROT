@@ -4,7 +4,7 @@
  */
 (function (root) {
   'use strict';
-  var FONT_SERIF = '"Songti TC","Noto Serif TC","Source Han Serif TC","PingFang TC","Heiti TC","Microsoft JhengHei",serif';
+  var FONT_SERIF = '"Yuexia Serif","Songti TC","Noto Serif TC","Source Han Serif TC","PingFang TC","Heiti TC","Microsoft JhengHei",serif';
   var FONT_SANS = '"PingFang TC","Noto Sans TC","Heiti TC","Microsoft JhengHei",sans-serif';
 
   var PALETTES = {
@@ -26,6 +26,17 @@
   };
   var PALETTE_IDS = ['wine', 'parchment', 'navy'];
   var FORMATS = { portrait: { w: 1080, h: 1920, label: '直式' }, square: { w: 1080, h: 1080, label: '方形' } };
+
+  // 等網站字型載入後再繪製，避免結果卡先用系統字型畫出來
+  var fontsReady = null;
+  function ensureFonts() {
+    if (!fontsReady) {
+      fontsReady = (document.fonts && document.fonts.load)
+        ? Promise.all([document.fonts.load('700 40px "Yuexia Serif"', '月下占卜'), document.fonts.load('400 40px "Yuexia Serif"', '月下占卜')]).catch(function () {})
+        : Promise.resolve();
+    }
+    return fontsReady;
+  }
 
   var imgCache = {};
   function loadImage(src) {
@@ -138,7 +149,8 @@
     var W = Lo.W, H = Lo.H;
     // 逆位直接使用「金框正向、插畫倒置」的逆位圖
     var srcs = data.cards.map(function (c) { return (c.rev ? 'cards/rv/' : 'cards/') + c.id + '.svg'; });
-    return Promise.all(srcs.map(loadImage)).then(function (imgs) {
+    return Promise.all([ensureFonts()].concat(srcs.map(loadImage))).then(function (res) {
+      var imgs = res.slice(1);
       var cv = document.createElement('canvas');
       cv.width = W; cv.height = H;
       var ctx = cv.getContext('2d');

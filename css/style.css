@@ -1,4 +1,7 @@
 /* 月下占卜：復古歐式・深酒紅／古董金／羊皮紙米色 */
+/* 思源宋體（Noto Serif TC，SIL OFL 1.1）網站子集，隨網站一起離線快取 */
+@font-face { font-family: "Yuexia Serif"; src: url("../fonts/yuexia-serif-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Yuexia Serif"; src: url("../fonts/yuexia-serif-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
 :root {
   --wine: #5a1424;
   --wine-deep: #2e0a14;
@@ -13,7 +16,7 @@
   --text: #f3e7cc;
   --text-soft: #d9c49a;
   --radius: 14px;
-  --serif: "Songti TC", "Noto Serif TC", "Source Han Serif TC", "PingFang TC", "Heiti TC", "Microsoft JhengHei", serif;
+  --serif: "Yuexia Serif", "Songti TC", "Noto Serif TC", "Source Han Serif TC", "PingFang TC", "Heiti TC", "Microsoft JhengHei", serif;
   --sans: -apple-system, "PingFang TC", "Noto Sans TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
@@ -430,3 +433,10 @@ input[type="text"] { min-height: 48px; }
 .hi-tags .hi-tag { margin-left: 0; white-space: nowrap; }
 .toast-action { margin-left: 12px; background: none; border: 1px solid var(--gold); color: var(--gold-soft); border-radius: 999px; padding: 2px 12px; font-size: 15px; min-height: 32px; cursor: pointer; }
 .toast { display: flex; align-items: center; justify-content: center; }
+
+/* ── 牌組合與主題牌義 ── */
+.combo { margin: 0 0 10px; }
+.combo-title { display: inline-block; font-family: var(--serif); font-weight: 700; color: var(--wine); margin-right: 8px; }
+.topic-list { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; margin: 10px 0 0; padding-top: 10px; border-top: 1px dashed rgba(156, 118, 51, 0.6); }
+.topic-list dt { font-family: var(--serif); font-weight: 700; color: var(--wine); }
+.topic-list dd { margin: 0; }

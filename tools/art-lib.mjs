@@ -92,7 +92,18 @@ export function sky(o = {}) {
 }
 export function ground(y, fill = PARCH2, o = {}) {
   const { curve = 10, hatch = 'dots' } = o;
-  return P(`M10,${y + curve} Q80,${y - curve} 150,${y} T290,${y - curve / 2} V490 H10Z`, fill, { hatch, sw: 1.2 });
+  return P(`M10,${y + curve} Q80,${y - curve} 150,${y} T290,${y - curve / 2} V490 H10Z`, fill, { hatch, sw: 1.2 }) + tufts(y + 14, Math.round(y));
+}
+// 地面的草叢與小石，讓地景更有細節
+export function tufts(y, seed = 1) {
+  let d = '', stones = '';
+  for (let i = 0; i < 9; i++) {
+    const x = 26 + ((i * 61 + seed * 7) % 250), yy = y + ((i * 37 + seed) % 50);
+    if (yy > 478) continue;
+    d += `M${x - 4},${yy} q2,-6 3,-8 M${x},${yy} q0,-7 1,-10 M${x + 4},${yy} q-1,-6 -3,-8 `;
+    if (i % 3 === 0) stones += `<ellipse cx="${x + 10}" cy="${yy - 1}" rx="3" ry="1.6" fill="${STONE}" stroke="${INK}" stroke-width="0.5"/>`;
+  }
+  return line(d, 0.7, '#4f5a30', ' opacity="0.8"') + stones;
 }
 export function hills(y, fill = GREENL) {
   return P(`M10,${y} Q60,${y - 30} 110,${y - 8} Q170,${y - 40} 220,${y - 10} Q260,${y - 26} 290,${y - 6} V${y + 40} H10Z`, fill, { hatch: 'hl' });
@@ -114,6 +125,9 @@ export function pool(cx, cy, rx, ry) {
 export function path(d) { return line(d, 1.1, INK) + line(d, 6, SAND, ' opacity="0.6"'); }
 export function cloud(x, y, w = 60, fill = WHITE) {
   const h = w * 0.38;
+  return cloudBody(x, y, w, h, fill) + line(`M${x - w * 0.22},${y - h * 0.35} q${w * 0.06},${-h * 0.3} ${w * 0.14},${-h * 0.1} M${x + w * 0.06},${y - h * 0.5} q${w * 0.07},${-h * 0.3} ${w * 0.16},${-h * 0.06}`, 0.7, INK, ' opacity="0.45"');
+}
+function cloudBody(x, y, w, h, fill) {
   return P(`M${x - w / 2},${y} q${-w * 0.12},${-h * 0.9} ${w * 0.18},${-h * 0.8} q${w * 0.08},${-h * 0.9} ${w * 0.32},${-h * 0.55} q${w * 0.2},${-h * 0.7} ${w * 0.34},${h * 0.1} q${w * 0.25},${h * 0.1} ${w * 0.16},${h * 1.25}Z`, fill, { hatch: 'hl' });
 }
 export function sun(x, y, r, o = {}) {
@@ -357,8 +371,14 @@ export function figure(o = {}) {
   const hy = sh - 14; // head center
   let s = '';
   if (head === 'halo') s += g(`translate(0 ${hy + 106})`, HEADWEAR.halo());
-  if (cloak) s += P(`M-18,${sh + 2} Q-38,${sh * 0.4} -34,0 L34,0 Q38,${sh * 0.4} 18,${sh + 2}Z`, cloak, { hatch: 'hx' });
-  if (hairLong) s += P(`M-12,${hy} q-6,22 -4,34 h32 q2,-12 -4,-34Z`, hair, { hatch: 'h', sw: 1 });
+  if (cloak) {
+    s += P(`M-18,${sh + 2} Q-38,${sh * 0.4} -34,0 L34,0 Q38,${sh * 0.4} 18,${sh + 2}Z`, cloak, { hatch: 'hx' });
+    s += line(`M-18,${sh + 4} Q-35,${sh * 0.4} -31,-1 M18,${sh + 4} Q35,${sh * 0.4} 31,-1`, 1.1, GOLDL, ' opacity="0.9"');
+  }
+  if (hairLong) {
+    s += P(`M-12,${hy} q-6,22 -4,34 h32 q2,-12 -4,-34Z`, hair, { hatch: 'h', sw: 1 });
+    s += line(`M-10,${hy + 6} q-3,12 -1,24 M10,${hy + 6} q3,12 1,24 M-6,${hy + 12} q-1,10 0,18 M6,${hy + 12} q1,10 0,18`, 0.5, INK, ' opacity="0.55"');
+  }
   // legs for walking
   if (pose === 'walk') s += line('M-8,-6 L-14,6 M8,-6 L16,4', 4, INK) + line('M-8,-6 L-14,6 M8,-6 L16,4', 2.4, SKIN);
   // robe
@@ -369,8 +389,14 @@ export function figure(o = {}) {
     s += P(`M-14,${sh} Q-20,${sh * 0.55} -24,${sh * 0.38} Q-34,${sh * 0.3} -32,-4 L32,-4 Q34,${sh * 0.3} 24,${sh * 0.38} Q20,${sh * 0.55} 14,${sh}Z`, robe);
     s += line(`M-28,${sh * 0.36} Q0,${sh * 0.3} 28,${sh * 0.36}`, 0.8);
     s += P('M-20,-4 h12 v6 h-12Z M8,-4 h12 v6 h-12Z', DARK, { hatch: null, sw: 0.8 });
+    s += `<path d="M8,${sh + 2} Q14,${sh * 0.5} 14,${sh * 0.34} L28,${sh * 0.34} Q34,${sh * 0.3} 32,-4 L14,-4Z" fill="url(#hx)" opacity="0.5"/>`;
+    s += line(`M-14,-4 Q-12,${sh * 0.16} -16,${sh * 0.32} M0,-4 Q1,${sh * 0.16} -1,${sh * 0.31} M14,-4 Q12,${sh * 0.16} 16,${sh * 0.32}`, 0.6, INK, ' opacity="0.55"');
   } else {
     s += P(`M-14,${sh} Q-18,${sh * 0.6} -26,0 L26,0 Q18,${sh * 0.6} 14,${sh}Z`, robe);
+    // 衣袍右側的雕版陰影與衣褶
+    s += `<path d="M6,${sh + 2} Q12,${sh * 0.6} 12,0 L26,0 Q18,${sh * 0.6} 14,${sh}Z" fill="url(#hx)" opacity="0.55"/>`;
+    s += line(`M-2,${sh + 34} Q-3,${sh * 0.3} -4,-1 M2,${sh + 34} Q4,${sh * 0.3} 6,-1 M-17,-1 Q-14,${sh * 0.25} -10,${sh * 0.5} M17,-1 Q14,${sh * 0.25} 10,${sh * 0.5}`, 0.6, INK, ' opacity="0.55"');
+    if (pose !== 'walk') s += El(-8, 1.5, 6, 2.6, DARK, { hatch: null, sw: 0.6 }) + El(8, 1.5, 6, 2.6, DARK, { hatch: null, sw: 0.6 });
     s += line(`M-6,${sh + 14} Q-8,${sh * 0.4} -12,-2 M6,${sh + 14} Q8,${sh * 0.4} 12,-2`, 0.7, INK, ' opacity="0.6"');
   }
   if (belt) s += line(`M-15,${sh + 30} Q0,${sh + 34} 15,${sh + 30}`, 2.2, belt);
@@ -393,7 +419,11 @@ export function figure(o = {}) {
       const h = typeof hold === 'string' ? { item: hold } : hold;
       item = g(`translate(${f(hx)} ${f(hy2)}) rotate(${h.rot || 0})`, h.item);
     }
-    return { k, item, hand: Ci(hx, hy2, 3.6, skin, { hatch: null, sw: 1 }) };
+    // 袖口金邊與手
+    const cx = sx + side * Math.sin(a) * len * 0.86, cy = sy + Math.cos(a) * len * 0.86;
+    k += `<circle cx="${f(cx)}" cy="${f(cy)}" r="3.4" fill="none" stroke="${GOLDL}" stroke-width="1.3"/>`;
+    const hand = Ci(hx, hy2, 4, skin, { hatch: null, sw: 1 }) + line(`M${f(hx - 1.6)},${f(hy2 + 1)} q1.6,1.4 3.2,0`, 0.6, INK, ' opacity="0.6"');
+    return { k, item, hand };
   };
   const A = arm(-1, armL, holdL), B = arm(1, armR, holdR);
   // neck & head
@@ -403,8 +433,18 @@ export function figure(o = {}) {
     s += Ci(0, hy, 11, WHITE, { hatch: 'h' }) + Ci(-4, hy - 1, 2.6, DARK, { hatch: null, sw: 0.5 }) + Ci(4, hy - 1, 2.6, DARK, { hatch: null, sw: 0.5 }) + line(`M-4,${hy + 6} H4 M-2,${hy + 5} V${hy + 8} M2,${hy + 5} V${hy + 8}`, 0.8);
   } else {
     s += Ci(0, hy, 11, skin, { hatch: null });
-    if (hair && head !== 'hood' && head !== 'helmet') s += P(`M-11,${hy - 1} q1,-12 11,-12 q10,0 11,12 q-4,-6 -11,-6 q-7,0 -11,6Z`, hair, { hatch: 'h', sw: 1 });
-    s += line(`M-5,${hy + 1} h3 M2,${hy + 1} h3`, 1) + line(`M-2,${hy + 6} q2,1.4 4,0`, 0.9);
+    if (hair && head !== 'hood' && head !== 'helmet') {
+      s += P(`M-11,${hy - 1} q1,-12 11,-12 q10,0 11,12 q-4,-6 -11,-6 q-7,0 -11,6Z`, hair, { hatch: 'h', sw: 1 });
+      s += line(`M-8,${hy - 4} q3,-6 8,-8 M-3,${hy - 6} q3,-4 7,-6 M3,${hy - 6} q3,-2 6,2`, 0.5, INK, ' opacity="0.6"');
+    }
+    // 臉部：眉、垂目、鼻、唇與腮紅
+    s += line(`M-6.5,${hy - 2.6} q2.2,-1.4 4.4,-0.2 M2.1,${hy - 2.8} q2.2,-1.2 4.4,0.2`, 0.8, BROWN);
+    s += line(`M-6,${hy + 0.6} q1.9,1.5 3.8,0 M2.2,${hy + 0.6} q1.9,1.5 3.8,0`, 0.9);
+    s += `<circle cx="-4.1" cy="${f(hy + 1.3)}" r="0.7" fill="${INK}"/><circle cx="4.1" cy="${f(hy + 1.3)}" r="0.7" fill="${INK}"/>`;
+    s += line(`M0.2,${hy + 1} q-1.2,2.6 0.6,3.4`, 0.6, INK, ' opacity="0.7"');
+    s += `<path d="M-2.2,${f(hy + 6.2)} q2.2,1.6 4.4,0 q-2.2,0.4 -4.4,0Z" fill="${ROSE}" stroke="${INK}" stroke-width="0.4"/>`;
+    s += `<circle cx="-6.4" cy="${f(hy + 4)}" r="2" fill="${ROSE}" opacity="0.28"/><circle cx="6.4" cy="${f(hy + 4)}" r="2" fill="${ROSE}" opacity="0.28"/>`;
+    s += `<path d="M-9,${f(hy + 2)} q1,7 9,9 q8,-2 9,-9" fill="none" stroke="${INK}" stroke-width="0.5" opacity="0.35"/>`;
   }
   if (head !== 'veil' && head !== 'hood' && head !== 'halo' && HEADWEAR[head]) s += g(`translate(0 ${hy + 106})`, HEADWEAR[head](o));
   if (head2 && HEADWEAR[head2]) s += g(`translate(0 ${hy + 106})`, HEADWEAR[head2](o));
@@ -450,6 +490,9 @@ export function horse(x, y, s = 1, o = {}) {
   k += P('M26,-66 Q34,-96 48,-108 L68,-92 Q66,-86 58,-86 L50,-90 Q46,-74 40,-48Z', fill, { hatch: 'h' });
   k += P('M30,-70 Q36,-96 48,-108 q-10,4 -14,0 q-6,10 -12,30Z', DARK, { hatch: null, sw: 0.8, op: 0.8 });
   k += Ci(54, -98, 1.6, INK, { hatch: null, sw: 0.4 }) + line('M48,-108 l2,-8 l4,7', 1);
+  // 鬃毛、鼻孔與韁繩
+  k += line('M32,-74 q-6,-8 -2,-16 M36,-84 q-6,-8 -1,-15 M40,-94 q-5,-7 0,-13 M44,-102 q-4,-6 1,-10', 0.8, INK, ' opacity="0.7"') +
+    `<circle cx="65" cy="-91" r="1" fill="${INK}"/>` + line('M58,-90 Q44,-80 20,-72', 1, BROWN);
   k += P('M-14,-74 h30 l-2,28 h-26Z', blanket, { hatch: 'hx', sw: 1 });
   let inner = k;
   if (rider) inner += rider;

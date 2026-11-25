@@ -44,6 +44,8 @@ jobs:
         run: node tests/content.cjs
       - name: extras
         run: node tests/extras.cjs
+      - name: polish
+        run: node tests/polish.cjs
       - name: update
         run: node tests/update.cjs
       - name: Upload screenshots

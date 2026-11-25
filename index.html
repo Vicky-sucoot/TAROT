@@ -11,12 +11,33 @@
 <meta name="apple-mobile-web-app-title" content="月下占卜">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
+<!-- 分享預覽（LINE、Facebook 等會讀取）。網址需為完整網址；更換網域時請一併修改 -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="月下占卜">
+<meta property="og:locale" content="zh_TW">
 <meta property="og:title" content="月下占卜">
-<meta property="og:description" content="在月光下，聽見自己的答案">
-<meta property="og:image" content="icons/icon-512.png">
+<meta property="og:description" content="在月光下，聽見自己的答案。免登入、可離線的繁體中文塔羅占卜。">
+<meta property="og:url" content="https://vicky-sucoot.github.io/TAROT/">
+<meta property="og:image" content="https://vicky-sucoot.github.io/TAROT/icons/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="月下占卜：月亮紋章、三張牌背與標語「在月光下，聽見自己的答案」">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://vicky-sucoot.github.io/TAROT/icons/og-image.jpg">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>
+  // 在畫面繪製前套用介面主題，避免閃爍（深色／淺色／跟隨系統）
+  (function () {
+    var t = 'dark';
+    try { t = localStorage.getItem('yuexia.theme') || 'dark'; } catch (e) {}
+    if (t === 'system') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    if (t !== 'light') t = 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -110,6 +131,13 @@
     <section class="view" id="view-setup" hidden>
       <h2 class="view-heading" id="setup-heading">三張牌指引</h2>
       <p class="view-sub" id="setup-positions"></p>
+      <details class="panel spread-guide" id="spread-guide">
+        <summary>這個牌陣適合問什麼？</summary>
+        <p id="spread-guide-fit"></p>
+        <p class="spread-guide-how"><b>怎麼看：</b><span id="spread-guide-how"></span></p>
+        <p class="spread-guide-ex-title">提問範例（點一下就會填入）：</p>
+        <div class="example-list" id="spread-guide-examples"></div>
+      </details>
       <fieldset class="chip-group">
         <legend id="setup-legend">選擇主題</legend>
         <div class="chips" id="setup-options" role="radiogroup"></div>
@@ -246,6 +274,16 @@
         </div>
         <input type="file" id="import-file" accept="application/json,.json" hidden>
         <p class="note">備份檔只在你的裝置上產生，不會上傳。檔案裡有你的提問與筆記，請自行妥善保管。</p>
+      </section>
+
+      <section class="panel settings-panel" aria-labelledby="set-theme-title">
+        <h3 class="backup-title" id="set-theme-title">介面主題</h3>
+        <div class="set-group" role="radiogroup" aria-label="介面主題">
+          <button type="button" class="set-opt" data-set-theme="dark" role="radio">深色酒紅</button>
+          <button type="button" class="set-opt" data-set-theme="light" role="radio">淺色羊皮紙</button>
+          <button type="button" class="set-opt" data-set-theme="system" role="radio">跟隨系統</button>
+        </div>
+        <p class="note">「跟隨系統」會依 iPhone 的淺色或深色模式自動切換。結果卡的配色另外在下方設定。</p>
       </section>
 
       <section class="panel settings-panel" aria-labelledby="set-card-title">

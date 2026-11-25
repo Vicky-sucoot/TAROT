@@ -196,6 +196,18 @@
       flow: '例如：這段時間的生活會往哪裡走？'
     }[spreadId];
     $('setup-choices').hidden = spreadId !== 'choice';
+    var gd = sp.guide;
+    $('spread-guide').hidden = !gd;
+    if (gd) {
+      $('spread-guide-fit').textContent = gd.fit;
+      $('spread-guide-how').textContent = gd.how;
+      $('spread-guide-examples').innerHTML = gd.examples.map(function (q, i) {
+        return '<button type="button" class="example-q" data-example="' + i + '">' + esc(q) + '</button>';
+      }).join('');
+      Array.prototype.forEach.call($('spread-guide-examples').children, function (b) {
+        b.onclick = function () { $('setup-question').value = gd.examples[+b.getAttribute('data-example')]; $('setup-question').focus(); toast('已填入範例提問，可以再修改'); };
+      });
+    }
     renderOptionChips();
     show('setup', sp.name);
   }
@@ -548,7 +560,7 @@
 
   // ───── 備份與還原 ─────
   function backupFile() {
-    var data = window.BACKUP.build(ST.all(), { palette: ST.getPalette(), format: ST.getCardFormat(), showDate: ST.getShowDate() }, ST.getDailyLog());
+    var data = window.BACKUP.build(ST.all(), { palette: ST.getPalette(), format: ST.getCardFormat(), showDate: ST.getShowDate(), theme: ST.getTheme() }, ST.getDailyLog());
     var name = 'yuexia-backup-' + fileStamp(Date.now()) + '.json';
     return { file: new File([JSON.stringify(data)], name, { type: 'application/json' }), count: data.records.length, days: Object.keys(data.dailyLog).length };
   }
@@ -592,6 +604,7 @@
         if (res.settings.palette) ST.setPalette(res.settings.palette);
         if (res.settings.format) ST.setCardFormat(res.settings.format);
         if (res.settings.showDate !== null) ST.setShowDate(res.settings.showDate);
+        if (res.settings.theme) { ST.setTheme(res.settings.theme); applyTheme(); }
         var addedDays = ST.importDailyLog(res.dailyLog);
         var msg = '已匯入 ' + r.added + ' 筆';
         if (addedDays) msg += '、' + addedDays + ' 天今日指引';
@@ -698,6 +711,9 @@
   var DAILY_UP = ['今天，讓「{k}」陪你走一段路。', '把「{k}」放在心上，今天會更清楚自己要什麼。', '今日關鍵詞是「{k}」，從一件小事開始實踐它。'];
   var DAILY_RV = ['今天留意「{k}」，慢一點也沒關係。', '如果感到卡住，看看是不是「{k}」在作用。', '今日提醒：溫柔地面對「{k}」，不必急著改變。'];
   function dailyLine(d) {
+    // 優先使用每張牌專屬的指引句，避免把負面關鍵詞套進「讓…陪你」之類的句型
+    var pl = window.PUBLIC_LINES && window.PUBLIC_LINES[d.id];
+    if (pl) return pl[d.rev ? 1 : 0];
     var c = T.BY_ID[d.id], f = d.rev ? c.rv : c.up;
     var arr = d.rev ? DAILY_RV : DAILY_UP;
     var seed = 0; for (var i = 0; i < d.date.length; i++) seed += d.date.charCodeAt(i);
@@ -924,7 +940,26 @@
     return '<p class="reading-focus">重複出現的牌：' + rep.map(function (k) { return esc(T.BY_ID[k].name) + ' ' + count[k] + ' 次'; }).join('、') + '</p>';
   }
 
+  // ───── 介面主題 ─────
+  var lightMQ = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+  function applyTheme() {
+    var t = ST.getTheme();
+    if (t === 'system') t = lightMQ && lightMQ.matches ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', t === 'light' ? '#efe2c2' : '#3a0c17');
+  }
+  if (lightMQ) {
+    var onSys = function () { if (ST.getTheme() === 'system') applyTheme(); };
+    if (lightMQ.addEventListener) lightMQ.addEventListener('change', onSys); else if (lightMQ.addListener) lightMQ.addListener(onSys);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-set-theme]'), function (b) {
+    b.onclick = function () { ST.setTheme(b.getAttribute('data-set-theme')); applyTheme(); syncSettings(); };
+  });
+
   function syncSettings() {
+    var th = ST.getTheme();
+    Array.prototype.forEach.call(document.querySelectorAll('[data-set-theme]'), function (b) { b.setAttribute('aria-checked', b.getAttribute('data-set-theme') === th); });
     var pal = ST.getPalette(), fmt = ST.getCardFormat();
     Array.prototype.forEach.call(document.querySelectorAll('[data-set-palette]'), function (b) { b.setAttribute('aria-checked', b.getAttribute('data-set-palette') === pal); });
     Array.prototype.forEach.call(document.querySelectorAll('[data-set-format]'), function (b) { b.setAttribute('aria-checked', b.getAttribute('data-set-format') === fmt); });
@@ -947,6 +982,7 @@
     confirmBox('確定要清除這台裝置上的所有資料嗎？' + (n ? '包含 ' + n + ' 筆占卜紀錄與回顧筆記、' : '') + '今日指引與結果卡設定都會被刪除，無法復原。建議先匯出備份。').then(function (ok) {
       if (!ok) return;
       ST.clearAll();
+      applyTheme();
       draw = null;
       renderDaily(false);
       syncSettings();
@@ -955,6 +991,7 @@
   };
 
   // ───── 啟動 ─────
+  applyTheme();
   renderDaily(false);
   route();
   OFF.start();

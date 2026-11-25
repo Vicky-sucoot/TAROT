@@ -7,6 +7,7 @@
   var KEY_DATE = 'yuexia.cardDate';
   var KEY_DAILY = 'yuexia.daily';
   var KEY_DAILY_LOG = 'yuexia.dailyLog';
+  var KEY_THEME = 'yuexia.theme';
   var PALETTES = ['wine', 'parchment', 'navy'];
   var memory = {};
 
@@ -63,7 +64,7 @@
     all: function () { return loadHistory(); },
     // 清除本網站在這台裝置上保存的所有資料
     clearAll: function () {
-      [KEY_HISTORY, KEY_PALETTE, KEY_FORMAT, KEY_DATE, KEY_DAILY, KEY_DAILY_LOG].forEach(function (k) {
+      [KEY_HISTORY, KEY_PALETTE, KEY_FORMAT, KEY_DATE, KEY_DAILY, KEY_DAILY_LOG, KEY_THEME].forEach(function (k) {
         delete memory[k];
         try { root.localStorage.removeItem(k); } catch (e) { /* 忽略 */ }
       });
@@ -84,6 +85,8 @@
       return PALETTES.indexOf(p) >= 0 ? p : 'wine';
     },
     setPalette: function (p) { set(KEY_PALETTE, PALETTES.indexOf(p) >= 0 ? p : 'wine'); },
+    getTheme: function () { var t = get(KEY_THEME); return t === 'light' || t === 'system' ? t : 'dark'; },
+    setTheme: function (t) { set(KEY_THEME, t === 'light' || t === 'system' ? t : 'dark'); },
     getCardFormat: function () { return get(KEY_FORMAT) === 'square' ? 'square' : 'portrait'; },
     setCardFormat: function (f) { set(KEY_FORMAT, f === 'square' ? 'square' : 'portrait'); },
     getShowDate: function () { return get(KEY_DATE) === '1'; },

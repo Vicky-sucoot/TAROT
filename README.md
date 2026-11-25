@@ -83,11 +83,15 @@ node tests/update.cjs
 
 這是純靜態網站，不需要建置步驟，任何支援 HTTPS 的靜態主機都可以。
 
-### GitHub Pages（已附 workflow）
+### GitHub Pages（從分支部署）
 
-1. 把程式碼合併到 `main`。
-2. 到 GitHub 儲存庫的 **Settings → Pages**，把 **Source** 設為 **GitHub Actions**。
-3. 推送到 `main` 之後，`.github/workflows/pages.yml` 會自動部署。網址通常是 `https://<帳號>.github.io/<儲存庫>/`。
+1. 到 GitHub 儲存庫的 **Settings → Pages**，把 **Source** 設為 **Deploy from a branch**。
+2. Branch 選 `main`，資料夾選 `/ (root)`，按 **Save**。
+3. 之後每次推送到 `main`，GitHub 會自動重新發布。網址通常是 `https://<帳號>.github.io/<儲存庫>/`。
+
+根目錄的 `.nojekyll` 會讓 GitHub 跳過 Jekyll 處理，把檔案原樣發布，請保留這個檔案。
+
+**修改網站後，推送前一定要先執行 `node tools/build-manifest.mjs`。** 這會更新快取版本號，已安裝的使用者才會收到「有新版本」的提示。沒更新的話，他們會一直使用舊的快取。
 
 網站全部使用相對路徑，放在子目錄下也能正常運作。
 

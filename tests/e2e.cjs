@@ -14,7 +14,7 @@ async function waitOffline(page) {
   await page.waitForFunction(() => document.getElementById('offline-text').textContent === '已可離線使用', null, { timeout: 60000 });
 }
 async function startSpread(page, spread, option, question) {
-  await page.goto(BASE + '#/setup/' + spread);
+  await page.goto(BASE + '#setup-' + spread);
   await page.click(`[data-opt="${option}"]`);
   if (question) await page.fill('#setup-question', question);
   await page.click('#btn-shuffle');
@@ -170,7 +170,7 @@ async function quick(page) {
   ok(dupFree, '洗牌抽樣無重複');
 
   console.log('【歷史紀錄與主題篩選】');
-  await page.goto(BASE + '#/');
+  await page.goto(BASE + '#home');
   await page.click('#btn-history');
   await page.waitForSelector('#view-history:not([hidden])');
   const allCount = await page.locator('.history-item').count();
@@ -204,7 +204,7 @@ async function quick(page) {
 
   console.log('【歷史紀錄中的逆位】');
   const revRec = await page.evaluate(() => window.STORE.list('all').find((r) => r.cards.some((c) => c.rev)));
-  await page.goto(BASE + '#/record/' + revRec.id);
+  await page.goto(BASE + '#record-' + revRec.id);
   await page.waitForSelector('#view-record:not([hidden])');
   const recRev = await page.evaluate((r) => {
     const i = r.cards.findIndex((c) => c.rev);
@@ -294,7 +294,7 @@ async function quick(page) {
   await page.click('#btn-save');
   await startSpread(page, 'guide', 'money');
   await quick(page); await flipAll(page); await page.click('#btn-save');
-  await page.goto(BASE + '#/history');
+  await page.goto(BASE + '#history');
   await page.waitForSelector('#view-history:not([hidden])');
   await page.click('[data-filter="money"]');
   ok(await page.locator('.history-item').count() === 1, '離線切換篩選（財運 1 筆）');

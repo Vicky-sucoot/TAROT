@@ -81,30 +81,30 @@
   function go(hash) {
     if (location.hash === hash) route(); else location.hash = hash;
   }
+  // 路由只用 ASCII 的 #name 形式（#setup-guide、#draw、#history、#record-<id>）
   function route() {
     var h = location.hash.replace(/^#\/?/, '');
-    var parts = h.split('/');
-    if (parts[0] === 'setup' && RD.SPREADS[parts[1]]) return showSetup(parts[1]);
-    if (parts[0] === 'draw' && draw) return show('draw', draw.spreadDef.name);
-    if (parts[0] === 'history') return showHistory();
-    if (parts[0] === 'record' && parts[1]) return showRecord(decodeURIComponent(parts[1]));
-    if (parts[0] && parts[0] !== '') { history.replaceState(null, '', location.pathname + location.search); }
+    var m;
+    if ((m = /^setup-(guide|relation)$/.exec(h))) return showSetup(m[1]);
+    if (h === 'draw' && draw) return show('draw', draw.spreadDef.name);
+    if (h === 'history') return showHistory();
+    if ((m = /^record-([A-Za-z0-9]+)$/.exec(h))) return showRecord(m[1]);
     show('home');
   }
   window.addEventListener('hashchange', route);
   $('btn-back').onclick = function () {
     var h = location.hash;
-    if (h.indexOf('#/record/') === 0) go('#/history');
-    else if (h.indexOf('#/draw') === 0 && draw) go('#/setup/' + draw.spread);
-    else go('#/');
+    if (h.indexOf('#record-') === 0) go('#history');
+    else if (h === '#draw' && draw) go('#setup-' + draw.spread);
+    else go('#home');
   };
-  $('btn-home').onclick = function () { go('#/'); };
+  $('btn-home').onclick = function () { go('#home'); };
 
   // ───── 首頁 ─────
   Array.prototype.forEach.call(document.querySelectorAll('[data-start]'), function (b) {
-    b.onclick = function () { go('#/setup/' + b.getAttribute('data-start')); };
+    b.onclick = function () { go('#setup-' + b.getAttribute('data-start')); };
   });
-  $('btn-history').onclick = function () { historyFilter = 'all'; go('#/history'); };
+  $('btn-history').onclick = function () { historyFilter = 'all'; go('#history'); };
   $('btn-share-site').onclick = function () {
     var url = location.origin + location.pathname; // 只分享公開首頁，不含任何占卜內容
     if (navigator.share) {
@@ -194,7 +194,7 @@
     buildDeck();
     setMode('swipe');
     $('pick-area').hidden = true;
-    go('#/draw');
+    go('#draw');
     // 洗牌動畫
     var st = $('draw-status');
     st.innerHTML = '<div class="shuffle-stage" aria-hidden="true"><img src="cards/back.svg" alt=""><img src="cards/back.svg" alt=""><img src="cards/back.svg" alt=""></div>洗牌中…';
@@ -368,7 +368,7 @@
       '</div>';
     el.hidden = false;
     $('btn-save').onclick = saveLive;
-    $('btn-restart').onclick = function () { draw = null; go('#/setup/' + rec.spread); $('setup-question').value = ''; };
+    $('btn-restart').onclick = function () { draw = null; go('#setup-' + rec.spread); $('setup-question').value = ''; };
     $('btn-preview').onclick = function () { openCardModal(cardData(rec)); };
     $('btn-download').onclick = function () { downloadCard(cardData(rec)); };
     setTimeout(function () { el.scrollIntoView({ behavior: isReduced() ? 'auto' : 'smooth', block: 'start' }); }, 60);
@@ -418,7 +418,7 @@
         '</span></button></li>';
     }).join('');
     Array.prototype.forEach.call(document.querySelectorAll('[data-rec]'), function (b) {
-      b.onclick = function () { go('#/record/' + encodeURIComponent(b.getAttribute('data-rec'))); };
+      b.onclick = function () { go('#record-' + b.getAttribute('data-rec')); };
     });
     var empty = $('history-empty');
     empty.hidden = list.length > 0;
@@ -428,7 +428,7 @@
 
   function showRecord(id) {
     var r = ST.get(id);
-    if (!r) { toast('找不到這筆紀錄'); go('#/history'); return; }
+    if (!r) { toast('找不到這筆紀錄'); go('#history'); return; }
     var sp = RD.SPREADS[r.spread];
     var cat = RD.CATEGORIES.filter(function (c) { return c.id === r.category; })[0];
     var meta = fmtDate(r.ts) + '・' + (cat ? cat.label : '');
@@ -448,7 +448,7 @@
         if (!ok) return;
         ST.remove(r.id);
         toast('已刪除');
-        go('#/history');
+        go('#history');
       });
     };
     show('record', '占卜紀錄');

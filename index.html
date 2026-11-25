@@ -40,6 +40,19 @@
         <p class="hero-tagline">在月光下，聽見自己的答案</p>
       </div>
 
+      <section class="daily panel" id="daily" aria-labelledby="daily-title">
+        <h2 class="daily-title" id="daily-title">今日指引</h2>
+        <div class="daily-body">
+          <button type="button" class="tile-card daily-card" id="daily-card" aria-label="抽今日一張">
+            <div class="flipper"><div class="face face-back"><img src="cards/back.svg" alt=""></div><div class="face face-front" id="daily-front"></div></div>
+          </button>
+          <div class="daily-text" id="daily-text">
+            <p class="daily-hint">每天抽一張牌，給今天一句提醒。同一天再打開，會看到同一張。</p>
+            <button type="button" class="btn btn-primary btn-small" id="btn-daily">抽今日一張</button>
+          </div>
+        </div>
+      </section>
+
       <div class="spread-list">
         <button class="spread-btn" type="button" data-start="guide">
           <span class="spread-name">三張牌指引</span>
@@ -49,10 +62,19 @@
           <span class="spread-name">感情關係牌陣</span>
           <span class="spread-desc">我的感受與期待／目前的互動模式／下一步建議</span>
         </button>
+        <button class="spread-btn" type="button" data-start="choice">
+          <span class="spread-name">二選一牌陣</span>
+          <span class="spread-desc">選項 A 的發展／選項 B 的發展／我真正在意的事</span>
+        </button>
+        <button class="spread-btn" type="button" data-start="flow">
+          <span class="spread-name">時間之流牌陣</span>
+          <span class="spread-desc">五張牌：過去的影響／現在／未來的走向／需要留意／行動建議</span>
+        </button>
       </div>
 
       <div class="home-actions">
         <button class="btn btn-ghost" type="button" id="btn-history">歷史紀錄</button>
+        <button class="btn btn-ghost" type="button" id="btn-gallery">牌卡圖鑑</button>
         <button class="btn btn-ghost" type="button" id="btn-share-site">分享網站</button>
       </div>
 
@@ -90,6 +112,16 @@
         <div class="chips" id="setup-options" role="radiogroup"></div>
         <p class="hint" id="setup-option-hint"></p>
       </fieldset>
+      <div class="choice-fields" id="setup-choices" hidden>
+        <label class="field">
+          <span class="field-label">選項 A（可留白）</span>
+          <input type="text" id="setup-choice-a" maxlength="40" placeholder="例如：留在現在的公司">
+        </label>
+        <label class="field">
+          <span class="field-label">選項 B（可留白）</span>
+          <input type="text" id="setup-choice-b" maxlength="40" placeholder="例如：換到新的工作">
+        </label>
+      </div>
       <label class="field">
         <span class="field-label">想問的問題（可留白）</span>
         <textarea id="setup-question" rows="3" maxlength="200" placeholder="例如：我該怎麼面對最近的工作壓力？"></textarea>
@@ -114,14 +146,14 @@
       <div class="pick-area" id="pick-area">
         <div class="mode-tabs" role="tablist">
           <button class="mode-tab is-active" type="button" role="tab" id="tab-swipe" aria-selected="true">滑動手選</button>
-          <button class="mode-tab" type="button" role="tab" id="tab-quick" aria-selected="false">快速抽三張</button>
+          <button class="mode-tab" type="button" role="tab" id="tab-quick" aria-selected="false">快速抽<span class="n-label">三</span>張</button>
         </div>
         <div class="mode-panel" id="panel-swipe">
           <p class="hint">左右滑動瀏覽牌背，點一張放入下一個牌位。</p>
           <div class="deck-scroller" id="deck-scroller" aria-label="牌堆"></div>
         </div>
         <div class="mode-panel" id="panel-quick" hidden>
-          <p class="hint">一次隨機抽出三張，依序放入牌位。</p>
+          <p class="hint">一次隨機抽出<span class="n-label">三</span>張，依序放入牌位。</p>
           <button class="btn btn-primary btn-block" type="button" id="btn-quick">快速抽三張</button>
         </div>
       </div>
@@ -131,11 +163,34 @@
 
     <!-- 歷史紀錄 -->
     <section class="view" id="view-history" hidden>
-      <h2 class="view-heading">歷史紀錄</h2>
+      <div class="view-head-row">
+        <h2 class="view-heading">歷史紀錄</h2>
+        <button class="btn btn-ghost btn-small" type="button" id="btn-stats">我的統計</button>
+      </div>
       <div class="chips filter-chips" id="history-filters" role="radiogroup" aria-label="主題篩選"></div>
       <ul class="history-list" id="history-list"></ul>
       <p class="empty" id="history-empty" hidden></p>
       <p class="note">紀錄只保存在這台裝置的目前瀏覽器中。iPhone 上，Safari 與主畫面版本的紀錄、配色分開保存，彼此看不到。</p>
+    </section>
+
+    <!-- 牌卡圖鑑 -->
+    <section class="view" id="view-gallery" hidden>
+      <h2 class="view-heading">牌卡圖鑑</h2>
+      <p class="view-sub">全部 78 張牌，點一張查看大圖與正逆位牌義。</p>
+      <div class="chips filter-chips" id="gallery-filters" role="radiogroup" aria-label="牌組篩選"></div>
+      <div class="gallery-grid" id="gallery-grid"></div>
+    </section>
+
+    <!-- 單張牌 -->
+    <section class="view" id="view-card" hidden>
+      <div id="card-body"></div>
+    </section>
+
+    <!-- 統計 -->
+    <section class="view" id="view-stats" hidden>
+      <h2 class="view-heading">我的統計</h2>
+      <p class="view-sub">依照這台裝置上已儲存的占卜紀錄計算。</p>
+      <div id="stats-body"></div>
     </section>
 
     <!-- 單筆紀錄 -->
@@ -172,9 +227,17 @@
     <div class="palette-switch" role="radiogroup" aria-label="結果卡配色">
       <button type="button" class="palette-opt" data-palette="wine" role="radio">酒紅古金</button>
       <button type="button" class="palette-opt" data-palette="parchment" role="radio">羊皮紙米白</button>
+      <button type="button" class="palette-opt" data-palette="navy" role="radio">深藍星空</button>
+    </div>
+    <div class="card-options">
+      <div class="format-switch" role="radiogroup" aria-label="結果卡尺寸">
+        <button type="button" class="format-opt" data-format="portrait" role="radio">直式</button>
+        <button type="button" class="format-opt" data-format="square" role="radio">方形（IG）</button>
+      </div>
+      <label class="date-toggle"><input type="checkbox" id="card-show-date"> 顯示占卜日期</label>
     </div>
     <div class="card-preview-wrap">
-      <img id="card-preview" alt="結果卡預覽圖">
+      <img id="card-preview" alt="結果卡預覽圖" data-format="portrait">
       <div class="card-preview-loading" id="card-preview-loading">繪製中…</div>
     </div>
     <p class="hint">結果卡不包含你的提問與感情情境。iPhone 也可以長按上方圖片，選擇「加入照片」。</p>

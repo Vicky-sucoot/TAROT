@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>月下占卜</title>
+<meta name="description" content="在月光下，聽見自己的答案。免登入、可離線的繁體中文塔羅占卜。">
+<meta name="theme-color" content="#3a0c17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="月下占卜">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<meta property="og:title" content="月下占卜">
+<meta property="og:description" content="在月光下，聽見自己的答案">
+<meta property="og:image" content="icons/icon-512.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <button class="topbar-back" id="btn-back" type="button" aria-label="返回" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="topbar-title" id="topbar-title">月下占卜</div>
+    <button class="topbar-home" id="btn-home" type="button" aria-label="回首頁" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+    </button>
+  </header>
+
+  <main id="main">
+    <!-- 首頁 -->
+    <section class="view" id="view-home" data-title="月下占卜">
+      <div class="hero">
+        <img class="hero-emblem" src="icons/emblem.svg" alt="" width="120" height="120">
+        <h1 class="hero-title">月下占卜</h1>
+        <p class="hero-tagline">在月光下，聽見自己的答案</p>
+      </div>
+
+      <div class="spread-list">
+        <button class="spread-btn" type="button" data-start="guide">
+          <span class="spread-name">三張牌指引</span>
+          <span class="spread-desc">現況／阻礙／建議・感情、工作、財運、綜合</span>
+        </button>
+        <button class="spread-btn" type="button" data-start="relation">
+          <span class="spread-name">感情關係牌陣</span>
+          <span class="spread-desc">我的感受與期待／目前的互動模式／下一步建議</span>
+        </button>
+      </div>
+
+      <div class="home-actions">
+        <button class="btn btn-ghost" type="button" id="btn-history">歷史紀錄</button>
+        <button class="btn btn-ghost" type="button" id="btn-share-site">分享網站</button>
+      </div>
+
+      <div class="panel offline-panel" id="offline-panel">
+        <div class="offline-row">
+          <span class="offline-dot" id="offline-dot" aria-hidden="true"></span>
+          <span class="offline-text" id="offline-text">正在檢查離線狀態…</span>
+        </div>
+        <div class="offline-progress" id="offline-progress" hidden><div class="offline-bar" id="offline-bar"></div></div>
+        <button class="btn btn-small" type="button" id="btn-offline-retry" hidden>重試離線準備</button>
+      </div>
+
+      <details class="panel install-guide" id="install-guide">
+        <summary>加入 iPhone 主畫面</summary>
+        <p class="standalone-note" id="standalone-note" hidden>你目前正在使用主畫面版本。</p>
+        <ol>
+          <li>用 iPhone 的 <b>Safari</b> 開啟本網站。</li>
+          <li>點下方工具列的「分享」按鈕（方框加向上箭頭）。</li>
+          <li>往下滑，選擇「加入主畫面」，名稱保持「月下占卜」，點「新增」。</li>
+          <li><b>重要：</b>安裝後，請在<b>連線狀態</b>下從主畫面開啟一次，等首頁顯示「已可離線使用」，就完成離線準備了。</li>
+        </ol>
+        <p class="note">提醒：在 iPhone 上，Safari 與主畫面版本的儲存空間彼此分開，占卜紀錄與結果卡配色不會互通。建議固定使用其中一個入口。</p>
+      </details>
+
+      <p class="privacy-note">免登入。你的提問與紀錄只保存在這台裝置，不會上傳。</p>
+      <p class="footer-links"><a href="docs/credits.html">牌義參考與授權說明</a></p>
+    </section>
+
+    <!-- 設定：主題／情境＋提問 -->
+    <section class="view" id="view-setup" hidden>
+      <h2 class="view-heading" id="setup-heading">三張牌指引</h2>
+      <p class="view-sub" id="setup-positions"></p>
+      <fieldset class="chip-group">
+        <legend id="setup-legend">選擇主題</legend>
+        <div class="chips" id="setup-options" role="radiogroup"></div>
+        <p class="hint" id="setup-option-hint"></p>
+      </fieldset>
+      <label class="field">
+        <span class="field-label">想問的問題（可留白）</span>
+        <textarea id="setup-question" rows="3" maxlength="200" placeholder="例如：我該怎麼面對最近的工作壓力？"></textarea>
+        <span class="hint">提問只保存在這台裝置，不會出現在分享的結果卡上。</span>
+      </label>
+      <div class="bottom-bar">
+        <button class="btn btn-primary btn-block" type="button" id="btn-shuffle">洗牌</button>
+      </div>
+    </section>
+
+    <!-- 抽牌與翻牌 -->
+    <section class="view" id="view-draw" hidden>
+      <div class="draw-head">
+        <h2 class="view-heading" id="draw-heading">三張牌指引</h2>
+        <p class="view-sub" id="draw-meta"></p>
+        <p class="draw-question" id="draw-question" hidden></p>
+      </div>
+
+      <div class="slots" id="slots"></div>
+      <p class="draw-status" id="draw-status" aria-live="polite"></p>
+
+      <div class="pick-area" id="pick-area">
+        <div class="mode-tabs" role="tablist">
+          <button class="mode-tab is-active" type="button" role="tab" id="tab-swipe" aria-selected="true">滑動手選</button>
+          <button class="mode-tab" type="button" role="tab" id="tab-quick" aria-selected="false">快速抽三張</button>
+        </div>
+        <div class="mode-panel" id="panel-swipe">
+          <p class="hint">左右滑動瀏覽牌背，點一張放入下一個牌位。</p>
+          <div class="deck-scroller" id="deck-scroller" aria-label="牌堆"></div>
+        </div>
+        <div class="mode-panel" id="panel-quick" hidden>
+          <p class="hint">一次隨機抽出三張，依序放入牌位。</p>
+          <button class="btn btn-primary btn-block" type="button" id="btn-quick">快速抽三張</button>
+        </div>
+      </div>
+
+      <div class="reading" id="reading" hidden></div>
+    </section>
+
+    <!-- 歷史紀錄 -->
+    <section class="view" id="view-history" hidden>
+      <h2 class="view-heading">歷史紀錄</h2>
+      <div class="chips filter-chips" id="history-filters" role="radiogroup" aria-label="主題篩選"></div>
+      <ul class="history-list" id="history-list"></ul>
+      <p class="empty" id="history-empty" hidden></p>
+      <p class="note">紀錄只保存在這台裝置的目前瀏覽器中。iPhone 上，Safari 與主畫面版本的紀錄、配色分開保存，彼此看不到。</p>
+    </section>
+
+    <!-- 單筆紀錄 -->
+    <section class="view" id="view-record" hidden>
+      <div id="record-body"></div>
+    </section>
+  </main>
+
+  <div class="update-banner" id="update-banner" hidden role="status">
+    <span>有新版本可以使用</span>
+    <button class="btn btn-small btn-primary" type="button" id="btn-update">重新載入</button>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</div>
+
+<!-- 確認對話框 -->
+<div class="modal" id="confirm-modal" hidden>
+  <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="confirm-text">
+    <p id="confirm-text"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" type="button" id="confirm-cancel">取消</button>
+      <button class="btn btn-primary" type="button" id="confirm-ok">確定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 結果卡預覽 -->
+<div class="modal sheet" id="card-modal" hidden>
+  <div class="modal-card sheet-card" role="dialog" aria-modal="true" aria-labelledby="card-modal-title">
+    <div class="sheet-head">
+      <h3 id="card-modal-title">結果卡預覽</h3>
+      <button class="sheet-close" type="button" id="card-close" aria-label="關閉">✕</button>
+    </div>
+    <div class="palette-switch" role="radiogroup" aria-label="結果卡配色">
+      <button type="button" class="palette-opt" data-palette="wine" role="radio">酒紅古金</button>
+      <button type="button" class="palette-opt" data-palette="parchment" role="radio">羊皮紙米白</button>
+    </div>
+    <div class="card-preview-wrap">
+      <img id="card-preview" alt="結果卡預覽圖">
+      <div class="card-preview-loading" id="card-preview-loading">繪製中…</div>
+    </div>
+    <p class="hint">結果卡不包含你的提問與感情情境。iPhone 也可以長按上方圖片，選擇「加入照片」。</p>
+    <div class="sheet-actions">
+      <button class="btn btn-primary" type="button" id="btn-card-share" hidden>分享結果卡</button>
+      <button class="btn btn-ghost" type="button" id="btn-card-download">下載 PNG</button>
+    </div>
+    <p class="hint" id="card-line-hint">想傳到 LINE：點「分享結果卡」後選 LINE；或先下載 PNG，再到 LINE 聊天室選擇圖片傳送。</p>
+  </div>
+</div>
+
+<script src="precache-manifest.js"></script>
+<script src="js/cards-data.js"></script>
+<script src="js/reading.js"></script>
+<script src="js/store.js"></script>
+<script src="js/resultcard.js"></script>
+<script src="js/offline.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

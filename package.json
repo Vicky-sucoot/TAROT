@@ -1,0 +1,14 @@
+{
+  "name": "yuexia-tarot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "月下占卜：繁體中文塔羅占卜 PWA（免登入、可離線）",
+  "scripts": {
+    "cards": "node tools/gen-cards.mjs",
+    "icons": "node tools/render-icons.cjs",
+    "build": "node tools/build-manifest.mjs",
+    "serve": "python3 -m http.server 8123",
+    "test": "node tests/e2e.cjs && node tests/update.cjs"
+  },
+  "license": "UNLICENSED"
+}

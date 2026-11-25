@@ -40,6 +40,9 @@ export const R = (x, y, w, h, fill, o = {}) => P(`M${x},${y}h${w}v${h}h${-w}Z`, 
 export const line = (d, w = 1.3, c = INK, extra = '') =>
   `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"${extra}/>`;
 
+// 拱形畫框（華麗版）
+export const ARCH = 'M30,452 V104 Q30,56 72,44 Q112,33 150,26 Q188,33 228,44 Q270,56 270,104 V452Z';
+
 // ───── 圖紋定義 ─────
 export function defs(id = 'x') {
   return `<defs>
@@ -52,15 +55,33 @@ export function defs(id = 'x') {
 <radialGradient id="pg" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#f6ecd4"/><stop offset="0.7" stop-color="${PARCH}"/><stop offset="1" stop-color="${PARCH2}"/></radialGradient>
 <radialGradient id="ng" cx="50%" cy="30%" r="80%"><stop offset="0" stop-color="#4a3a52"/><stop offset="1" stop-color="${NIGHT}"/></radialGradient>
 <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${GOLDL}"/><stop offset="0.5" stop-color="${GOLD}"/><stop offset="1" stop-color="#8e6626"/></linearGradient>
-<clipPath id="panel"><rect x="18" y="18" width="264" height="464" rx="3"/></clipPath>
+<linearGradient id="gv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7e9b5"/><stop offset="0.35" stop-color="#d4ad5a"/><stop offset="0.6" stop-color="#9a6f2a"/><stop offset="0.85" stop-color="#e6c77c"/><stop offset="1" stop-color="#a87b31"/></linearGradient>
+<linearGradient id="gh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9a6f2a"/><stop offset="0.3" stop-color="#f3dfa2"/><stop offset="0.55" stop-color="#c99d4c"/><stop offset="0.8" stop-color="#f0d791"/><stop offset="1" stop-color="#9a6f2a"/></linearGradient>
+<radialGradient id="gem" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#f2a3ad"/><stop offset="0.35" stop-color="#a3243a"/><stop offset="1" stop-color="#3d0612"/></radialGradient>
+<radialGradient id="gemb" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#cfe2ee"/><stop offset="0.35" stop-color="#3f6f8c"/><stop offset="1" stop-color="#132634"/></radialGradient>
+<radialGradient id="halo" cx="50%" cy="8%" r="75%"><stop offset="0" stop-color="#fff6d6" stop-opacity="0.9"/><stop offset="0.5" stop-color="#f4dc9a" stop-opacity="0.25"/><stop offset="1" stop-color="#f4dc9a" stop-opacity="0"/></radialGradient>
+<pattern id="damask" width="22" height="22" patternUnits="userSpaceOnUse"><path d="M11,3 l3,8 l-3,8 l-3,-8Z M0,11 l3,-2 l0,4Z M22,11 l-3,-2 l0,4Z" fill="${GOLD}" opacity="0.28"/><circle cx="0" cy="0" r="1.2" fill="${GOLDL}" opacity="0.35"/><circle cx="22" cy="22" r="1.2" fill="${GOLDL}" opacity="0.35"/><circle cx="22" cy="0" r="1.2" fill="${GOLDL}" opacity="0.35"/><circle cx="0" cy="22" r="1.2" fill="${GOLDL}" opacity="0.35"/></pattern>
+<clipPath id="panel"><path d="${ARCH}"/></clipPath>
 </defs>`;
 }
 
 // ───── 天空與地景 ─────
 export function sky(o = {}) {
   const { night = false, top = 18, bottom = 482 } = o;
-  if (night) return `<rect x="18" y="${top}" width="264" height="${bottom - top}" fill="url(#ng)"/><rect x="18" y="${top}" width="264" height="${bottom - top}" fill="url(#hz)" opacity="0.8"/>`;
-  return `<rect x="18" y="${top}" width="264" height="${bottom - top}" fill="url(#pg)"/><rect x="18" y="${top}" width="264" height="${bottom - top}" fill="url(#hz)"/>`;
+  const h = bottom - top;
+  let rays = '';
+  for (let i = 0; i < 25; i++) {
+    const a = Math.PI * (0.06 + 0.88 * i / 24);
+    rays += `M150,${top} L${f(150 - Math.cos(a) * 420)},${f(top + Math.sin(a) * 420)} `;
+  }
+  if (night) {
+    let st = '';
+    for (let i = 0; i < 26; i++) st += `<circle cx="${f(26 + (i * 71) % 250)}" cy="${f(top + 14 + (i * 53) % 230)}" r="${i % 3 ? 0.9 : 1.5}" fill="${GOLDL}" opacity="0.8"/>`;
+    return `<rect x="18" y="${top}" width="264" height="${h}" fill="url(#ng)"/><rect x="18" y="${top}" width="264" height="${h}" fill="url(#hz)" opacity="0.8"/>` +
+      `<path d="${rays}" stroke="${GOLDL}" stroke-width="0.5" opacity="0.18"/>` + st;
+  }
+  return `<rect x="18" y="${top}" width="264" height="${h}" fill="url(#pg)"/><rect x="18" y="${top}" width="264" height="${h}" fill="url(#halo)"/>` +
+    `<path d="${rays}" stroke="${GOLD}" stroke-width="0.6" opacity="0.32"/><rect x="18" y="${top}" width="264" height="${h}" fill="url(#hz)"/>`;
 }
 export function ground(y, fill = PARCH2, o = {}) {
   const { curve = 10, hatch = 'dots' } = o;
@@ -322,7 +343,7 @@ export function figure(o = {}) {
   const {
     x = 150, y = 400, s: sc = 1, flip = false, rot = 0, robe = WINE, cloak = null, head = 'none', head2 = null,
     armL = 25, armR = 25, holdL = null, holdR = null, pose = 'stand', skin = SKIN, hair = BROWN,
-    belt = GOLD, skull = false, rideLeg = true, tilt = 0, hairLong = false
+    belt = GOLD, skull = false, rideLeg = true, tilt = 0, hairLong = false, trim = true
   } = o;
   const hs = pose === 'kneel' ? 0.78 : 1;
   const sh = -92 * hs + (1 - hs) * 0; // shoulder y
@@ -346,6 +367,12 @@ export function figure(o = {}) {
     s += line(`M-6,${sh + 14} Q-8,${sh * 0.4} -12,-2 M6,${sh + 14} Q8,${sh * 0.4} 12,-2`, 0.7, INK, ' opacity="0.6"');
   }
   if (belt) s += line(`M-15,${sh + 30} Q0,${sh + 34} 15,${sh + 30}`, 2.2, belt);
+  if (robe !== SKIN && trim) {
+    // 華麗金邊：領口、衣襬與胸前寶石
+    s += line(`M-12,${sh + 1} Q0,${sh + 9} 12,${sh + 1}`, 2, GOLDL) + `<circle cx="0" cy="${f(sh + 8)}" r="2.3" fill="url(#gem)" stroke="${GOLD}" stroke-width="0.8"/>`;
+    if (pose === 'stand' || pose === 'walk' || pose === 'kneel') s += line('M-25,-3 H25', 2.6, GOLDL) + line('M-24,-3 H24', 0.9, GOLD, ' stroke-dasharray="0.1 3.4"');
+    else if (pose === 'seat') s += line('M-31,-6 H31', 2.6, GOLDL) + line('M-30,-6 H30', 0.9, GOLD, ' stroke-dasharray="0.1 3.4"');
+  }
   // arms
   const arm = (side, ang, hold) => {
     const a = (ang * Math.PI) / 180;
@@ -470,8 +497,8 @@ export function handFromCloud(side, y, item) {
     cloud(cx, y + 24, 92);
 }
 // 羅馬數字（以線條繪製，不使用字體）
-export function roman(n, cx, cy, h = 13) {
-  if (n === 0) return Ci(cx, cy, h * 0.42, 'none', { hatch: null, sw: 1.6, stroke: INK });
+export function roman(n, cx, cy, h = 13, color = INK, w = 1.6) {
+  if (n === 0) return Ci(cx, cy, h * 0.42, 'none', { hatch: null, sw: w, stroke: color });
   const map = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
   let str = '';
   let k = n;
@@ -489,25 +516,66 @@ export function roman(n, cx, cy, h = 13) {
     if (c === 'X') d += `M${x},${t} L${x + w},${b} M${x + w},${t} L${x},${b} `;
     x += w + gap;
   }
-  return line(d, 1.6, INK);
+  return line(d, w, color);
 }
 
-// ───── 牌框 ─────
+// ───── 牌框（華麗版） ─────
+const SUIT_EMB = {
+  wands: () => g('scale(0.85) translate(-8 0) rotate(90)', I.wand(30)),
+  cups: () => g('translate(0 7) scale(0.42)', I.cup(1)),
+  swords: () => g('scale(0.85) translate(-9 0) rotate(90)', I.sword(32)),
+  pentacles: () => I.pentacle(7.5)
+};
+export function curl(flip = false) {
+  // 金色捲草紋
+  const d = 'M0,0 C10,-10 28,-8 30,4 C31,12 22,16 17,11 C13,7 17,2 21,5 M8,-4 C4,-12 -4,-12 -6,-6 M14,-7 C16,-15 26,-17 30,-12';
+  return g(flip ? 'scale(-1 1)' : '', line(d, 2.6, '#5a3a14', ' opacity="0.55"') + line(d, 1.5, 'url(#gh)') +
+    El(25, -15, 2.2, 4.4, GOLDL, { hatch: null, sw: 0.5, rot: 40 }) + El(-7, -10, 2, 4, GOLDL, { hatch: null, sw: 0.5, rot: -30 }));
+}
+export function gem(x, y, r, kind = 'gem') {
+  return `<circle cx="${x}" cy="${y}" r="${r + 1.8}" fill="url(#gv)" stroke="#5a3a14" stroke-width="0.6"/><circle cx="${x}" cy="${y}" r="${r}" fill="url(#${kind})"/><circle cx="${x - r * 0.35}" cy="${y - r * 0.4}" r="${r * 0.28}" fill="#fff" opacity="0.7"/>`;
+}
+export function fleur(x, y, rot) {
+  return g(`translate(${x} ${y}) rotate(${rot})`,
+    P('M0,0 C2,-6 8,-8 12,-6 C8,-4 6,0 4,4 C8,2 12,4 12,8 C8,8 4,6 0,0Z', 'url(#gv)', { hatch: null, sw: 0.6, stroke: '#5a3a14' }) +
+    P('M0,0 C6,-2 8,-8 6,-12 C4,-8 0,-6 -4,-4 C-2,-8 -4,-12 -8,-12 C-8,-8 -6,-4 0,0Z', 'url(#gv)', { hatch: null, sw: 0.6, stroke: '#5a3a14' }) +
+    gem(0, 0, 2.6));
+}
 export function frame(inner, o = {}) {
-  const { numeral = null } = o;
-  let plaque = '';
-  if (numeral !== null) {
-    plaque = P('M118,20 h64 q6,0 6,6 v16 q0,6 -6,6 h-64 q-6,0 -6,-6 v-16 q0,-6 6,-6Z', PARCH, { hatch: null, sw: 1.2, stroke: GOLD }) +
-      `<rect x="115" y="23" width="70" height="22" rx="4" fill="none" stroke="${GOLD}" stroke-width="0.6"/>` + roman(numeral, 150, 34, 12);
+  const { numeral = null, suit = null, court = false } = o;
+  // 外框底色與錦緞紋
+  let s = `<rect x="0" y="0" width="300" height="500" rx="14" fill="${WINED}"/><rect x="0" y="0" width="300" height="500" rx="14" fill="url(#damask)"/>`;
+  s += `<rect x="3.5" y="3.5" width="293" height="493" rx="11.5" fill="none" stroke="url(#gv)" stroke-width="3"/>`;
+  s += `<rect x="9" y="9" width="282" height="482" rx="8" fill="none" stroke="${GOLDL}" stroke-width="2" stroke-linecap="round" stroke-dasharray="0.1 4.2" opacity="0.9"/>`;
+  s += `<rect x="13" y="13" width="274" height="474" rx="6" fill="none" stroke="${GOLD}" stroke-width="0.7"/>`;
+  // 畫面（縮放進拱形畫框）
+  s += `<path d="${ARCH}" fill="${PARCH}"/><g clip-path="url(#panel)"><g transform="translate(12 9) scale(0.92)">${inner}</g></g>`;
+  // 拱框：三重金線
+  s += `<path d="${ARCH}" fill="none" stroke="#3a1a0c" stroke-width="5.5" opacity="0.55"/><path d="${ARCH}" fill="none" stroke="url(#gv)" stroke-width="3.6"/>`;
+  s += `<path d="M24,452 V102 Q24,50 70,38 Q110,27 150,19 Q190,27 230,38 Q276,50 276,102 V452" fill="none" stroke="${GOLDL}" stroke-width="0.8"/>`;
+  // 拱肩捲草紋
+  s += g('translate(30 28)', curl()) + g('translate(270 28)', curl(true));
+  // 兩側寶石鏈
+  for (let y = 128; y <= 430; y += 38) {
+    s += P(`M19,${y - 7} L22,${y} L19,${y + 7} L16,${y}Z`, 'url(#gv)', { hatch: null, sw: 0.5, stroke: '#5a3a14' });
+    s += P(`M281,${y - 7} L284,${y} L281,${y + 7} L278,${y}Z`, 'url(#gv)', { hatch: null, sw: 0.5, stroke: '#5a3a14' });
+    if ((y - 128) % 76 === 0) s += gem(19, y + 19, 1.6, 'gemb') + gem(281, y + 19, 1.6, 'gemb');
   }
-  const corner = (x, y) => star(x, y, 6, { n: 4, fill: GOLDL, inner: 0.35, sw: 0.7 });
-  return `<rect x="0" y="0" width="300" height="500" rx="14" fill="${WINED}"/>` +
-    `<rect x="4" y="4" width="292" height="492" rx="11" fill="none" stroke="${GOLD}" stroke-width="1.4"/>` +
-    `<rect x="8" y="8" width="284" height="484" rx="8" fill="none" stroke="${GOLD}" stroke-width="0.6" stroke-dasharray="1.5 2.5"/>` +
-    `<g clip-path="url(#panel)">${inner}</g>` +
-    `<rect x="18" y="18" width="264" height="464" rx="3" fill="none" stroke="${GOLD}" stroke-width="2.6"/>` +
-    `<rect x="23" y="23" width="254" height="454" rx="2" fill="none" stroke="${GOLDL}" stroke-width="0.7" opacity="0.9"/>` +
-    corner(18, 18) + corner(282, 18) + corner(18, 482) + corner(282, 482) + plaque;
+  // 拱頂寶石徽章
+  s += `<circle cx="150" cy="24" r="12" fill="${WINED}" stroke="url(#gv)" stroke-width="2.4"/>` + star(150, 24, 9, { n: 8, fill: 'url(#gv)', inner: 0.42, sw: 0.5 }) + gem(150, 24, 3);
+  // 四角百合紋
+  s += fleur(17, 17, 45) + fleur(283, 17, 135) + fleur(17, 483, -45) + fleur(283, 483, -135);
+  // 底部徽章匾額
+  s += line('M40,471 H96 M204,471 H260', 1.2, 'url(#gh)') + line('M46,476 H96 M204,476 H254', 0.6, GOLD);
+  s += g('translate(96 473)', g('scale(0.55)', curl(true))) + g('translate(204 473)', g('scale(0.55)', curl()));
+  s += `<rect x="104" y="458" width="92" height="30" rx="8" fill="url(#gv)"/><rect x="107" y="461" width="86" height="24" rx="6" fill="${WINE}"/><rect x="107" y="461" width="86" height="24" rx="6" fill="url(#damask)"/><rect x="109.5" y="463.5" width="81" height="19" rx="4.5" fill="none" stroke="${GOLDL}" stroke-width="0.6"/>`;
+  let badge = '';
+  if (numeral !== null) badge = roman(numeral, 150, 473, 11, GOLDL, 1.7);
+  else if (suit) {
+    const e = SUIT_EMB[suit]();
+    badge = g('translate(150 473)', e) + (court ? g('translate(126 476)', crownShape(0, 0, 12, GOLDL)) + g('translate(174 476)', crownShape(0, 0, 12, GOLDL)) : star(124, 473, 3.5, { n: 4, fill: GOLDL, inner: 0.3, sw: 0.4 }) + star(176, 473, 3.5, { n: 4, fill: GOLDL, inner: 0.3, sw: 0.4 }));
+  }
+  return s + badge;
 }
 
 export function svgDoc(body) {

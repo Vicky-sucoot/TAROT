@@ -1,12 +1,13 @@
 /* 自動產生，請勿手動修改：node tools/build-manifest.mjs */
 self.PRECACHE = {
-  "version": "862d4e0aeec1",
+  "version": "365a2c267681",
   "files": [
     "./",
     "index.html",
     "manifest.webmanifest",
     "css/style.css",
     "js/app.js",
+    "js/backup.js",
     "js/cards-data.js",
     "js/offline.js",
     "js/reading.js",

@@ -441,7 +441,8 @@
       var sub = r.spread === 'relation' && r.option && r.option !== 'none' ? '・' + RD.CONTEXT_LABEL[r.option] : '';
       return '<li class="history-item"><button type="button" data-rec="' + esc(r.id) + '">' +
         '<span class="hi-thumbs">' + r.cards.map(function (c) { return '<span class="hi-thumb">' + artHTML(c.id, c.rev) + '</span>'; }).join('') + '</span>' +
-        '<span class="hi-meta"><span class="hi-title">' + esc(sp.name) + '<span class="hi-tag">' + (tag ? tag.label : '') + sub + '</span></span>' +
+        '<span class="hi-meta"><span class="hi-title">' + esc(sp.name) + '<span class="hi-tag">' + (tag ? tag.label : '') + sub + '</span>' +
+        (r.note && r.note.text ? '<span class="hi-tag hi-noted">已回顧</span>' : '') + '</span>' +
         '<span class="hi-date">' + fmtDate(r.ts) + '</span>' +
         '<span class="hi-cards">' + r.cards.map(function (c) { return esc(T.BY_ID[c.id].name) + (c.rev ? '（逆）' : ''); }).join('・') + '</span>' +
         (privateText(r.question, r.choices) ? '<span class="hi-cards">' + esc(privateText(r.question, r.choices)) + '</span>' : '') +
@@ -467,12 +468,25 @@
       (privateText(r.question, r.choices) ? '<p class="draw-question">' + esc(privateText(r.question, r.choices)) + '</p>' : '') +
       '<div class="slots">' + r.cards.map(function (c, i) { return staticTile(sp.positions[i], c.id, c.rev); }).join('') + '</div>' +
       '<div class="reading">' + readingHTML(r) + '</div>' +
+      '<div class="reading-block note-block"><h3>後來怎麼了</h3>' +
+      '<p class="hint" style="color:var(--ink-soft)">過幾天回來，寫下實際發生的事，或現在回頭看這次占卜的想法。筆記只存在這台裝置。</p>' +
+      '<textarea id="rec-note" rows="4" maxlength="2000" placeholder="例如：後來我主動約對方聊了一次，比想像中順利。">' + esc(r.note ? r.note.text : '') + '</textarea>' +
+      '<p class="note-meta" id="rec-note-meta">' + (r.note ? '上次更新：' + fmtDate(r.note.ts) : '還沒有筆記') + '</p>' +
+      '<div class="note-actions"><button class="btn btn-primary btn-small" type="button" id="rec-note-save">儲存筆記</button></div></div>' +
       '<div class="actions"><button class="btn btn-primary" type="button" id="rec-preview">預覽結果卡</button>' +
       '<button class="btn btn-ghost" type="button" id="rec-download">下載 PNG</button>' +
       '<button class="btn btn-ghost btn-danger btn-block" type="button" id="rec-delete">刪除這筆紀錄</button></div>';
     $('record-body').innerHTML = h;
     $('rec-preview').onclick = function () { openCardModal(cardData(r)); };
     $('rec-download').onclick = function () { downloadCard(cardData(r)); };
+    $('rec-note-save').onclick = function () {
+      var text = $('rec-note').value.trim();
+      var note = text ? { text: text, ts: Date.now() } : null;
+      if (!ST.update(r.id, { note: note })) { toast('儲存空間無法使用，筆記未能保存'); return; }
+      r.note = note || undefined;
+      $('rec-note-meta').textContent = note ? '上次更新：' + fmtDate(note.ts) : '還沒有筆記';
+      toast(note ? '已儲存回顧筆記' : '已清除回顧筆記');
+    };
     $('rec-delete').onclick = function () {
       confirmBox('確定要刪除這筆紀錄嗎？刪除後無法復原。').then(function (ok) {
         if (!ok) return;
@@ -483,6 +497,61 @@
     };
     show('record', '占卜紀錄');
   }
+
+  // ───── 備份與還原 ─────
+  function backupFile() {
+    var data = window.BACKUP.build(ST.all(), { palette: ST.getPalette(), format: ST.getCardFormat(), showDate: ST.getShowDate() });
+    var name = 'yuexia-backup-' + fileStamp(Date.now()) + '.json';
+    return { file: new File([JSON.stringify(data)], name, { type: 'application/json' }), count: data.records.length };
+  }
+  function downloadFile(file) {
+    var url = URL.createObjectURL(file);
+    var a = document.createElement('a');
+    a.href = url; a.download = file.name; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  }
+  $('btn-export').onclick = function () {
+    var b = backupFile();
+    if (!b.count) { toast('目前沒有紀錄可以匯出'); return; }
+    var canShare = false;
+    try { canShare = !!(navigator.canShare && navigator.share && navigator.canShare({ files: [b.file] })); } catch (e) { canShare = false; }
+    if (canShare) {
+      navigator.share({ files: [b.file], title: '月下占卜備份' }).then(function () {
+        toast('已匯出 ' + b.count + ' 筆紀錄');
+      }, function (e) {
+        if (e && e.name === 'AbortError') return;
+        downloadFile(b.file); toast('已下載備份檔（' + b.count + ' 筆紀錄）');
+      });
+    } else {
+      downloadFile(b.file);
+      toast('已下載備份檔（' + b.count + ' 筆紀錄）');
+    }
+  };
+  $('btn-import').onclick = function () { $('import-file').value = ''; $('import-file').click(); };
+  $('import-file').onchange = function () {
+    var f = $('import-file').files[0];
+    if (!f) return;
+    f.text().then(function (text) {
+      var res;
+      try { res = window.BACKUP.parse(text); } catch (e) { toast(e.message); return; }
+      if (!res.records.length) { toast('備份檔裡沒有可以匯入的紀錄' + (res.skipped ? '（' + res.skipped + ' 筆格式不符）' : '')); return; }
+      return confirmBox('備份檔裡有 ' + res.records.length + ' 筆紀錄，將合併到目前的紀錄中，已經存在的不會重複。也會套用備份裡的結果卡設定。確定匯入嗎？').then(function (ok) {
+        if (!ok) return;
+        var r = ST.importMany(res.records);
+        if (!r.ok) { toast('儲存空間無法使用，匯入失敗'); return; }
+        if (res.settings.palette) ST.setPalette(res.settings.palette);
+        if (res.settings.format) ST.setCardFormat(res.settings.format);
+        if (res.settings.showDate !== null) ST.setShowDate(res.settings.showDate);
+        var msg = '已匯入 ' + r.added + ' 筆';
+        if (r.dup) msg += '，' + r.dup + ' 筆已存在而略過';
+        if (res.skipped) msg += '，' + res.skipped + ' 筆格式不符';
+        toast(msg);
+        historyFilter = 'all';
+        showHistory();
+      });
+    }, function () { toast('無法讀取這個檔案'); });
+  };
 
   // ───── 結果卡 ─────
   var modalData = null, modalBlob = null, modalUrl = null, renderSeq = 0;

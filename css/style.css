@@ -391,3 +391,15 @@ input[type="text"] { min-height: 48px; }
 .date-toggle input { width: 22px; height: 22px; accent-color: var(--wine); }
 .palette-opt[data-palette="navy"][aria-checked="true"] { background: #1d2a4a; color: #efd99a; border-color: #efd99a; box-shadow: 0 0 0 2px #b8893a; }
 #card-preview[data-format="square"] { aspect-ratio: 1 / 1; }
+
+/* ── 備份與還原 ── */
+.backup-panel { margin-top: 20px; }
+.backup-title { margin: 0 0 6px; font-family: var(--serif); font-size: 18px; color: var(--gold-soft); }
+.backup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0 4px; }
+
+/* ── 回顧筆記 ── */
+.note-block textarea { background: #fffaf0; }
+.note-meta { font-size: 13px; color: var(--ink-soft); margin: 6px 0 0 !important; }
+.note-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+.reading-block .btn-primary { min-height: 44px; }
+.hi-tag.hi-noted { background: var(--wine); color: var(--gold-soft); border: 1px solid var(--gold); }

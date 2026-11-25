@@ -15,8 +15,14 @@ export const tr = (x, y, s = 1, r = 0, flip = false) =>
   `translate(${f(x)} ${f(y)})` + (r ? ` rotate(${r})` : '') + (s !== 1 || flip ? ` scale(${flip ? -s : s} ${s})` : '');
 
 // 填色＋雕版排線陰影＋描邊
+let QID = 0;
 export function P(d, fill, o = {}) {
   const { hatch = 'h', sw = 1.3, stroke = INK, op = 1 } = o;
+  if (hatch && fill !== 'none' && d.length > 90) {
+    // 長路徑只寫一次：底色用外層 g 繼承，排線陰影以 <use> 重用同一路徑
+    const id = 'q' + (QID++).toString(36);
+    return `<g fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${op !== 1 ? ` opacity="${op}"` : ''}><path id="${id}" d="${d}"/></g><use href="#${id}" fill="url(#${hatch})" stroke="none"/>`;
+  }
   let s = `<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"${op !== 1 ? ` opacity="${op}"` : ''}/>`;
   if (hatch && fill !== 'none') s += `<path d="${d}" fill="url(#${hatch})" stroke="none"/>`;
   return s;
@@ -62,6 +68,7 @@ export function defs(id = 'x') {
 <radialGradient id="halo" cx="50%" cy="8%" r="75%"><stop offset="0" stop-color="#fff6d6" stop-opacity="0.9"/><stop offset="0.5" stop-color="#f4dc9a" stop-opacity="0.25"/><stop offset="1" stop-color="#f4dc9a" stop-opacity="0"/></radialGradient>
 <pattern id="damask" width="22" height="22" patternUnits="userSpaceOnUse"><path d="M11,3 l3,8 l-3,8 l-3,-8Z M0,11 l3,-2 l0,4Z M22,11 l-3,-2 l0,4Z" fill="${GOLD}" opacity="0.28"/><circle cx="0" cy="0" r="1.2" fill="${GOLDL}" opacity="0.35"/><circle cx="22" cy="22" r="1.2" fill="${GOLDL}" opacity="0.35"/><circle cx="22" cy="0" r="1.2" fill="${GOLDL}" opacity="0.35"/><circle cx="0" cy="22" r="1.2" fill="${GOLDL}" opacity="0.35"/></pattern>
 <clipPath id="panel"><path d="${ARCH}"/></clipPath>
+${FRAME_SYMBOLS()}
 </defs>`;
 }
 
@@ -541,33 +548,39 @@ export function fleur(x, y, rot) {
     P('M0,0 C6,-2 8,-8 6,-12 C4,-8 0,-6 -4,-4 C-2,-8 -4,-12 -8,-12 C-8,-8 -6,-4 0,0Z', 'url(#gv)', { hatch: null, sw: 0.6, stroke: '#5a3a14' }) +
     gem(0, 0, 2.6));
 }
+// 牌框中重複出現的紋飾只定義一次，再以 <use> 引用
+function FRAME_SYMBOLS() {
+  return `<g id="fl">${fleur(0, 0, 0)}</g><g id="cu">${curl()}</g><g id="gb">${gem(0, 0, 1.6, 'gemb')}</g>` +
+    `<path id="dm" d="M0,-7 L3,0 L0,7 L-3,0Z" fill="url(#gv)" stroke="#5a3a14" stroke-width="0.5"/>`;
+}
+const use = (id, t) => `<use href="#${id}" transform="${t}"/>`;
 export function frame(inner, o = {}) {
-  const { numeral = null, suit = null, court = false } = o;
+  const { numeral = null, suit = null, court = false, rev = false } = o;
   // 外框底色與錦緞紋
   let s = `<rect x="0" y="0" width="300" height="500" rx="14" fill="${WINED}"/><rect x="0" y="0" width="300" height="500" rx="14" fill="url(#damask)"/>`;
   s += `<rect x="3.5" y="3.5" width="293" height="493" rx="11.5" fill="none" stroke="url(#gv)" stroke-width="3"/>`;
   s += `<rect x="9" y="9" width="282" height="482" rx="8" fill="none" stroke="${GOLDL}" stroke-width="2" stroke-linecap="round" stroke-dasharray="0.1 4.2" opacity="0.9"/>`;
   s += `<rect x="13" y="13" width="274" height="474" rx="6" fill="none" stroke="${GOLD}" stroke-width="0.7"/>`;
   // 畫面（縮放進拱形畫框）
-  s += `<path d="${ARCH}" fill="${PARCH}"/><g clip-path="url(#panel)"><g transform="translate(12 9) scale(0.92)">${inner}</g></g>`;
+  s += `<path d="${ARCH}" fill="${PARCH}"/><g clip-path="url(#panel)"><g transform="${rev ? 'rotate(180 150 239) ' : ''}translate(12 9) scale(0.92)">${inner}</g></g>`;
+  // 逆位：只把框內插畫繞畫框中心旋轉 180 度，金框與徽章保持正向
   // 拱框：三重金線
   s += `<path d="${ARCH}" fill="none" stroke="#3a1a0c" stroke-width="5.5" opacity="0.55"/><path d="${ARCH}" fill="none" stroke="url(#gv)" stroke-width="3.6"/>`;
   s += `<path d="M24,452 V102 Q24,50 70,38 Q110,27 150,19 Q190,27 230,38 Q276,50 276,102 V452" fill="none" stroke="${GOLDL}" stroke-width="0.8"/>`;
   // 拱肩捲草紋
-  s += g('translate(30 28)', curl()) + g('translate(270 28)', curl(true));
+  s += use('cu', 'translate(30 28)') + use('cu', 'translate(270 28) scale(-1 1)');
   // 兩側寶石鏈
   for (let y = 128; y <= 430; y += 38) {
-    s += P(`M19,${y - 7} L22,${y} L19,${y + 7} L16,${y}Z`, 'url(#gv)', { hatch: null, sw: 0.5, stroke: '#5a3a14' });
-    s += P(`M281,${y - 7} L284,${y} L281,${y + 7} L278,${y}Z`, 'url(#gv)', { hatch: null, sw: 0.5, stroke: '#5a3a14' });
-    if ((y - 128) % 76 === 0) s += gem(19, y + 19, 1.6, 'gemb') + gem(281, y + 19, 1.6, 'gemb');
+    s += use('dm', `translate(19 ${y})`) + use('dm', `translate(281 ${y})`);
+    if ((y - 128) % 76 === 0) s += use('gb', `translate(19 ${y + 19})`) + use('gb', `translate(281 ${y + 19})`);
   }
   // 拱頂寶石徽章
   s += `<circle cx="150" cy="24" r="12" fill="${WINED}" stroke="url(#gv)" stroke-width="2.4"/>` + star(150, 24, 9, { n: 8, fill: 'url(#gv)', inner: 0.42, sw: 0.5 }) + gem(150, 24, 3);
   // 四角百合紋
-  s += fleur(17, 17, 45) + fleur(283, 17, 135) + fleur(17, 483, -45) + fleur(283, 483, -135);
+  s += use('fl', 'translate(17 17) rotate(45)') + use('fl', 'translate(283 17) rotate(135)') + use('fl', 'translate(17 483) rotate(-45)') + use('fl', 'translate(283 483) rotate(-135)');
   // 底部徽章匾額
   s += line('M40,471 H96 M204,471 H260', 1.2, 'url(#gh)') + line('M46,476 H96 M204,476 H254', 0.6, GOLD);
-  s += g('translate(96 473)', g('scale(0.55)', curl(true))) + g('translate(204 473)', g('scale(0.55)', curl()));
+  s += use('cu', 'translate(96 473) scale(-0.55 0.55)') + use('cu', 'translate(204 473) scale(0.55)');
   s += `<rect x="104" y="458" width="92" height="30" rx="8" fill="url(#gv)"/><rect x="107" y="461" width="86" height="24" rx="6" fill="${WINE}"/><rect x="107" y="461" width="86" height="24" rx="6" fill="url(#damask)"/><rect x="109.5" y="463.5" width="81" height="19" rx="4.5" fill="none" stroke="${GOLDL}" stroke-width="0.6"/>`;
   let badge = '';
   if (numeral !== null) badge = roman(numeral, 150, 473, 11, GOLDL, 1.7);
@@ -578,6 +591,17 @@ export function frame(inner, o = {}) {
   return s + badge;
 }
 
+// 輸出前壓縮：數字取一位小數、移除多餘空白與可繼承的重複屬性
+export function minify(svg) {
+  return svg
+    .replace(/-?\d+\.\d{2,}/g, (m) => { const v = Math.round(parseFloat(m) * 10) / 10; return String(v === 0 ? 0 : v); })
+    .replace(/ stroke-linejoin="round"/g, '')
+    .replace(/ stroke-linecap="round"/g, '')
+    .replace(/ stroke="none"/g, '')
+    .replace(/>\s+</g, '><')
+    .replace(/\n/g, '')
+    .replace(/\s{2,}/g, ' ');
+}
 export function svgDoc(body) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="500" viewBox="0 0 300 500">${defs()}${body}</svg>\n`;
+  return minify(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="500" viewBox="0 0 300 500" stroke-linejoin="round" stroke-linecap="round">${defs()}${body}</svg>`) + '\n';
 }

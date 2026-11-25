@@ -34,8 +34,19 @@
   }
   var toastTimer;
   function toast(msg) {
-    var el = $('toast'); el.textContent = msg; el.hidden = false;
+    var el = $('toast'); el.textContent = msg; el.hidden = false; // textContent 也會清掉先前的動作按鈕
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.hidden = true; }, 2600);
+  }
+  // 帶有一個動作按鈕的提示（例如刪除後的「復原」），6 秒後消失
+  function toastAction(msg, label, fn) {
+    var el = $('toast');
+    el.innerHTML = '';
+    var span = document.createElement('span'); span.textContent = msg;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'toast-action'; b.id = 'toast-action'; b.textContent = label;
+    b.onclick = function () { el.hidden = true; fn(); };
+    el.appendChild(span); el.appendChild(b);
+    el.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.hidden = true; }, 6000);
   }
   function confirmBox(text) {
     return new Promise(function (resolve) {
@@ -53,7 +64,7 @@
   // ───── 牌面元件 ─────
   function artHTML(id, rev) {
     var c = T.BY_ID[id];
-    return '<img class="' + (rev ? 'art-rev' : '') + '" src="' + c.img + '" alt="' + esc(c.name) + (rev ? '（逆位，插畫倒置）' : '') + '">';
+    return '<img src="' + (rev ? c.imgRv : c.img) + '" alt="' + esc(c.name) + (rev ? '（逆位，插畫倒置）' : '') + '">';
   }
   function oriHTML(rev) { return '<span class="ori ' + (rev ? 'ori-rv' : 'ori-up') + '">' + (rev ? '逆位' : '正位') + '</span>'; }
 
@@ -76,7 +87,7 @@
   function dateKey(d) { d = d || new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 
   // ───── 路由 ─────
-  var VIEWS = ['home', 'setup', 'draw', 'history', 'record', 'gallery', 'card', 'stats'];
+  var VIEWS = ['home', 'setup', 'draw', 'history', 'record', 'gallery', 'card', 'stats', 'settings'];
   var draw = null; // 目前這一局
   var setupSpread = 'guide';
   var setupOption = { guide: 'general', relation: 'none', choice: 'general', flow: 'general' };
@@ -88,6 +99,7 @@
     $('topbar-title').textContent = title || '月下占卜';
     $('btn-back').hidden = view === 'home';
     $('btn-home').hidden = view === 'home';
+    $('btn-settings').hidden = view !== 'home';
     window.scrollTo(0, 0);
   }
   function go(hash) {
@@ -104,6 +116,7 @@
     if (h === 'cards') return showGallery();
     if ((m = /^card-([mwcsp]\d\d)$/.exec(h)) && T.BY_ID[m[1]]) return showCard(m[1]);
     if (h === 'stats') return showStats();
+    if (h === 'settings') return showSettings();
     show('home');
   }
   window.addEventListener('hashchange', route);
@@ -120,9 +133,12 @@
   Array.prototype.forEach.call(document.querySelectorAll('[data-start]'), function (b) {
     b.onclick = function () { go('#setup-' + b.getAttribute('data-start')); };
   });
-  $('btn-history').onclick = function () { historyFilter = 'all'; go('#history'); };
+  $('btn-history').onclick = function () { historyFilter = 'all'; $('history-search').value = ''; go('#history'); };
   $('btn-gallery').onclick = function () { go('#cards'); };
   $('btn-stats').onclick = function () { go('#stats'); };
+  $('btn-settings').onclick = function () { go('#settings'); };
+  $('offline-line').onclick = function () { go('#settings'); };
+  $('history-to-settings').onclick = function () { go('#settings'); };
   $('btn-share-site').onclick = function () {
     var url = location.origin + location.pathname; // 只分享公開首頁，不含任何占卜內容
     if (navigator.share) {
@@ -134,11 +150,12 @@
     }
   };
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-  if (standalone) { $('standalone-note').hidden = false; }
+  // 已從主畫面開啟時，首頁不再顯示安裝教學（設定頁仍保留）
+  if (standalone) { $('standalone-note').hidden = false; $('install-guide').hidden = true; }
 
   // 離線狀態
-  OFF.subscribe(function (s) {
-    var dot = $('offline-dot'), txt = $('offline-text'), prog = $('offline-progress'), retry = $('btn-offline-retry');
+  function renderOffline(s, ids) {
+    var dot = $(ids.dot), txt = $(ids.text), prog = $(ids.progress), retry = $(ids.retry);
     dot.className = 'offline-dot';
     retry.hidden = true; prog.hidden = true;
     if (s.status === 'ready') { dot.classList.add('ok'); txt.textContent = '已可離線使用'; }
@@ -146,13 +163,18 @@
       dot.classList.add('busy');
       txt.textContent = s.status === 'checking' ? '正在檢查離線狀態…' : '正在準備離線使用（' + s.done + '／' + s.total + '）';
       prog.hidden = s.status === 'checking';
-      $('offline-bar').style.width = Math.round((s.done / Math.max(1, s.total)) * 100) + '%';
+      $(ids.bar).style.width = Math.round((s.done / Math.max(1, s.total)) * 100) + '%';
     } else if (s.status === 'error') {
       dot.classList.add('err'); txt.textContent = '離線準備未完成。' + (s.message || ''); retry.hidden = false;
     } else if (s.status === 'unsupported') {
       txt.textContent = s.message || '此環境不支援離線功能。';
     }
+  }
+  OFF.subscribe(function (s) {
+    renderOffline(s, { dot: 'offline-dot', text: 'offline-text', progress: 'offline-progress', bar: 'offline-bar', retry: 'btn-offline-retry' });
+    renderOffline(s, { dot: 'set-offline-dot', text: 'set-offline-text', progress: 'set-offline-progress', bar: 'set-offline-bar', retry: 'set-offline-retry' });
   });
+  $('set-offline-retry').onclick = function () { OFF.verify(); };
   $('btn-offline-retry').onclick = function () { OFF.verify(); };
   OFF.onUpdate(function () { $('update-banner').hidden = false; });
   $('btn-update').onclick = function () { $('btn-update').disabled = true; OFF.applyUpdate(); };
@@ -428,20 +450,31 @@
 
   // ───── 歷史紀錄 ─────
   function showHistory() {
+    renderHistory();
+    show('history', '歷史紀錄');
+  }
+  function searchText(r) {
+    return [RD.SPREADS[r.spread].name, r.question || '', r.choices ? (r.choices.a || '') + ' ' + (r.choices.b || '') : '', r.note ? r.note.text : '']
+      .concat(r.cards.map(function (c) { return T.BY_ID[c.id].name; })).join(' ').toLowerCase();
+  }
+  function renderHistory() {
     $('history-filters').innerHTML = RD.CATEGORIES.map(function (c) {
       return '<button type="button" class="chip" role="radio" aria-checked="' + (c.id === historyFilter) + '" data-filter="' + c.id + '">' + c.label + '</button>';
     }).join('');
     Array.prototype.forEach.call($('history-filters').children, function (b) {
-      b.onclick = function () { historyFilter = b.getAttribute('data-filter'); showHistory(); };
+      b.onclick = function () { historyFilter = b.getAttribute('data-filter'); renderHistory(); };
     });
+    var q = $('history-search').value.trim().toLowerCase();
     var list = ST.list(historyFilter);
+    if (q) list = list.filter(function (r) { return searchText(r).indexOf(q) >= 0; });
     $('history-list').innerHTML = list.map(function (r) {
       var sp = RD.SPREADS[r.spread];
       var tag = RD.CATEGORIES.filter(function (c) { return c.id === r.category; })[0];
       var sub = r.spread === 'relation' && r.option && r.option !== 'none' ? '・' + RD.CONTEXT_LABEL[r.option] : '';
       return '<li class="history-item"><button type="button" data-rec="' + esc(r.id) + '">' +
         '<span class="hi-thumbs">' + r.cards.map(function (c) { return '<span class="hi-thumb">' + artHTML(c.id, c.rev) + '</span>'; }).join('') + '</span>' +
-        '<span class="hi-meta"><span class="hi-title">' + esc(sp.name) + '<span class="hi-tag">' + (tag ? tag.label : '') + sub + '</span>' +
+        '<span class="hi-meta"><span class="hi-title">' + esc(sp.name) + '</span>' +
+        '<span class="hi-tags"><span class="hi-tag">' + (tag ? tag.label : '') + sub + '</span>' +
         (r.note && r.note.text ? '<span class="hi-tag hi-noted">已回顧</span>' : '') + '</span>' +
         '<span class="hi-date">' + fmtDate(r.ts) + '</span>' +
         '<span class="hi-cards">' + r.cards.map(function (c) { return esc(T.BY_ID[c.id].name) + (c.rev ? '（逆）' : ''); }).join('・') + '</span>' +
@@ -453,9 +486,9 @@
     });
     var empty = $('history-empty');
     empty.hidden = list.length > 0;
-    empty.textContent = historyFilter === 'all' ? '還沒有儲存的占卜紀錄' : '目前沒有這個主題的占卜紀錄';
-    show('history', '歷史紀錄');
+    empty.textContent = q ? '找不到符合「' + $('history-search').value.trim() + '」的紀錄' : (historyFilter === 'all' ? '還沒有儲存的占卜紀錄' : '目前沒有這個主題的占卜紀錄');
   }
+  $('history-search').addEventListener('input', renderHistory);
 
   function showRecord(id) {
     var r = ST.get(id);
@@ -491,8 +524,12 @@
       confirmBox('確定要刪除這筆紀錄嗎？刪除後無法復原。').then(function (ok) {
         if (!ok) return;
         ST.remove(r.id);
-        toast('已刪除');
         go('#history');
+        toastAction('已刪除這筆紀錄', '復原', function () {
+          ST.importMany([r]);
+          if (location.hash === '#history') renderHistory();
+          toast('已復原');
+        });
       });
     };
     show('record', '占卜紀錄');
@@ -548,7 +585,8 @@
         if (res.skipped) msg += '，' + res.skipped + ' 筆格式不符';
         toast(msg);
         historyFilter = 'all';
-        showHistory();
+        $('history-search').value = '';
+        go('#history');
       });
     }, function () { toast('無法讀取這個檔案'); });
   };
@@ -721,7 +759,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-orient]'), function (b) {
       b.onclick = function () {
         var rv = b.getAttribute('data-orient') === 'rv';
-        $('card-detail-img').className = rv ? 'art-rev' : '';
+        $('card-detail-img').src = rv ? c.imgRv : c.img;
         Array.prototype.forEach.call(document.querySelectorAll('[data-orient]'), function (o) { o.setAttribute('aria-checked', o === b); });
       };
     });
@@ -774,6 +812,37 @@
       }).join('') + '</ol></div>';
     show('stats', '我的統計');
   }
+
+  // ───── 設定 ─────
+  function syncSettings() {
+    var pal = ST.getPalette(), fmt = ST.getCardFormat();
+    Array.prototype.forEach.call(document.querySelectorAll('[data-set-palette]'), function (b) { b.setAttribute('aria-checked', b.getAttribute('data-set-palette') === pal); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-set-format]'), function (b) { b.setAttribute('aria-checked', b.getAttribute('data-set-format') === fmt); });
+    $('set-show-date').checked = ST.getShowDate();
+  }
+  function showSettings() {
+    syncSettings();
+    $('app-version').textContent = (window.PRECACHE && window.PRECACHE.version) || '';
+    show('settings', '設定');
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-set-palette]'), function (b) {
+    b.onclick = function () { ST.setPalette(b.getAttribute('data-set-palette')); syncSettings(); };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-set-format]'), function (b) {
+    b.onclick = function () { ST.setCardFormat(b.getAttribute('data-set-format')); syncSettings(); };
+  });
+  $('set-show-date').onchange = function () { ST.setShowDate($('set-show-date').checked); };
+  $('btn-clear-all').onclick = function () {
+    var n = ST.list('all').length;
+    confirmBox('確定要清除這台裝置上的所有資料嗎？' + (n ? '包含 ' + n + ' 筆占卜紀錄與回顧筆記、' : '') + '今日指引與結果卡設定都會被刪除，無法復原。建議先匯出備份。').then(function (ok) {
+      if (!ok) return;
+      ST.clearAll();
+      draw = null;
+      renderDaily(false);
+      syncSettings();
+      toast('已清除所有資料');
+    });
+  };
 
   // ───── 啟動 ─────
   renderDaily(false);

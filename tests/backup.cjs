@@ -29,8 +29,8 @@ async function toastText(page) {
   return page.textContent('#toast');
 }
 async function importFile(page, file) {
-  await page.goto(BASE + '#history');
-  await page.waitForSelector('#view-history:not([hidden])');
+  await page.goto(BASE + '#settings');
+  await page.waitForSelector('#view-settings:not([hidden])');
   await page.evaluate(() => { document.getElementById('import-file').value = ''; document.getElementById('toast').hidden = true; });
   await page.setInputFiles('#import-file', file);
 }
@@ -69,6 +69,8 @@ async function importFile(page, file) {
   await page.screenshot({ path: path.join(SHOTS, 'b02-history.png'), fullPage: true });
 
   console.log('【匯出】');
+  await page.goto(BASE + '#settings');
+  await page.waitForSelector('#view-settings:not([hidden])');
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#btn-export')]);
   const backupPath = path.join(SHOTS, 'backup.json');
   await dl.saveAs(backupPath);
@@ -87,6 +89,8 @@ async function importFile(page, file) {
   await p2.evaluate(() => { localStorage.clear(); });
   // 匯出前改配色，確認匯入會套用備份裡的設定
   await page.evaluate(() => { window.STORE.setPalette('navy'); window.STORE.setCardFormat('square'); });
+  await page.goto(BASE + '#settings');
+  await page.waitForSelector('#view-settings:not([hidden])');
   const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#btn-export')]);
   const backup2 = path.join(SHOTS, 'backup2.json');
   await dl2.saveAs(backup2);
@@ -95,6 +99,7 @@ async function importFile(page, file) {
   ok(/3 筆紀錄/.test(await p2.textContent('#confirm-text')), '匯入前確認筆數');
   await p2.click('#confirm-ok');
   ok(/已匯入 3 筆/.test(await toastText(p2)), '匯入 3 筆');
+  await p2.waitForSelector('#view-history:not([hidden])');
   ok(await p2.locator('.history-item').count() === 3, '歷史列表顯示匯入的 3 筆');
   const restored = await p2.evaluate(() => ({ list: window.STORE.list('all'), pal: window.STORE.getPalette(), fmt: window.STORE.getCardFormat() }));
   ok(JSON.stringify(restored.list.map((r) => r.id)) === JSON.stringify(recs.map((r) => r.id)), '紀錄與排序一致');
@@ -153,12 +158,12 @@ async function importFile(page, file) {
   await ctx2.setOffline(true);
   await p2.goto(BASE + '#history');
   await p2.waitForSelector('#view-history:not([hidden])').catch(() => {});
-  const offlineOk = await p2.evaluate(() => !!document.getElementById('btn-export'));
-  ok(offlineOk, '離線開啟歷史頁');
+  await p2.goto(BASE + '#settings');
+  ok(await p2.isVisible('#btn-export'), '離線開啟設定頁的備份功能');
   await ctx2.setOffline(false);
   await ctx.setOffline(true);
-  await page.goto(BASE + '#history');
-  await page.waitForSelector('#view-history:not([hidden])');
+  await page.goto(BASE + '#settings');
+  await page.waitForSelector('#view-settings:not([hidden])');
   const [dl3] = await Promise.all([page.waitForEvent('download'), page.click('#btn-export')]);
   ok(/\.json$/.test(dl3.suggestedFilename()), '離線匯出');
   await page.evaluate(() => localStorage.removeItem('yuexia.history.v1'));

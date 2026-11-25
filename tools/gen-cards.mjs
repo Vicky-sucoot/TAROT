@@ -11,7 +11,7 @@ const { INK, WINE, WINED, GOLD, GOLDL, PARCH, PARCH2, SKIN, WHITE, DARK, BLUE, B
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'cards');
-mkdirSync(out, { recursive: true });
+mkdirSync(join(out, 'rv'), { recursive: true });
 
 const stars = (pts, r = 4) => pts.map(([x, y]) => star(x, y, r, { n: 8, fill: GOLDL, sw: 0.6 })).join('');
 
@@ -359,12 +359,17 @@ function skyDeco(id) {
 
 let count = 0;
 for (const [id, fn] of Object.entries(MAJOR)) {
-  writeFileSync(join(out, id + '.svg'), svgDoc(frame(fn(), { numeral: parseInt(id.slice(1), 10) })));
+  const body = fn(), opt = { numeral: parseInt(id.slice(1), 10) };
+  writeFileSync(join(out, id + '.svg'), svgDoc(frame(body, opt)));
+  writeFileSync(join(out, 'rv', id + '.svg'), svgDoc(frame(body, { ...opt, rev: true })));
   count++;
 }
 for (const [id, fn] of Object.entries(MINOR)) {
-  writeFileSync(join(out, id + '.svg'), svgDoc(frame(SPARSE.includes(id) ? injectSky(fn(), skyDeco(id)) : fn(), { suit: { w: 'wands', c: 'cups', s: 'swords', p: 'pentacles' }[id[0]], court: parseInt(id.slice(1), 10) >= 11 })));
+  const body = SPARSE.includes(id) ? injectSky(fn(), skyDeco(id)) : fn();
+  const opt = { suit: { w: 'wands', c: 'cups', s: 'swords', p: 'pentacles' }[id[0]], court: parseInt(id.slice(1), 10) >= 11 };
+  writeFileSync(join(out, id + '.svg'), svgDoc(frame(body, opt)));
+  writeFileSync(join(out, 'rv', id + '.svg'), svgDoc(frame(body, { ...opt, rev: true })));
   count++;
 }
 writeFileSync(join(out, 'back.svg'), back());
-console.log('generated', count, 'cards + back');
+console.log('generated', count, 'cards (upright + reversed) + back');

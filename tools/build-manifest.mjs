@@ -11,6 +11,7 @@ const files = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css',
   ...list('js', '.js'),
   ...list('cards', '.svg'),
+  ...list('cards/rv', '.svg'),
   'icons/icon.svg', 'icons/emblem.svg', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png',
   'docs/credits.html', 'precache-manifest.js'
 ];

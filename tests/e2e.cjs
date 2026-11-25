@@ -56,6 +56,33 @@ async function quick(page) {
   ok(svgs.length === 79, '78 張牌圖＋1 張牌背 SVG 檔案齊全');
   const hashes = new Set(svgs.map((f) => fs.readFileSync(path.join(__dirname, '..', 'cards', f), 'utf8')));
   ok(hashes.size === 79, '79 張圖檔內容各不相同（每張獨立構圖）');
+  const rvs = fs.readdirSync(path.join(__dirname, '..', 'cards', 'rv')).filter((f) => f.endsWith('.svg'));
+  ok(rvs.length === 78, '78 張逆位圖齊全');
+
+  console.log('【逆位圖：插畫旋轉、金框正向】');
+  const rvCheck = await page.evaluate(async () => {
+    const load = (src) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.src = src; });
+    const draw = (im) => { const c = document.createElement('canvas'); c.width = 300; c.height = 500; c.getContext('2d').drawImage(im, 0, 0); return c.getContext('2d'); };
+    const close = (p, q) => Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) + Math.abs(p[2] - q[2]) < 40;
+    const out = [];
+    for (const id of ['m21', 'w14', 'c03', 's10', 'p05']) {
+      const up = draw(await load('cards/' + id + '.svg')), rv = draw(await load('cards/rv/' + id + '.svg'));
+      let art = 0, frameSame = 0, n = 0, f = 0;
+      for (let k = 0; k < 60; k++) {
+        const x = 60 + (k * 37) % 180, y = 120 + (k * 71) % 280; // 拱形畫框內
+        // 以 9×9 區塊平均比較，避免細排線差一個像素造成誤判
+        const avg = (ctx, cx, cy) => { const d = ctx.getImageData(cx - 4, cy - 4, 9, 9).data; const s = [0, 0, 0]; for (let q = 0; q < d.length; q += 4) { s[0] += d[q]; s[1] += d[q + 1]; s[2] += d[q + 2]; } return s.map((v) => v / 81); };
+        if (close(avg(rv, x, y), avg(up, 300 - x, 478 - y))) art++; n++;
+      }
+      for (const [x, y] of [[150, 473], [17, 17], [283, 483], [150, 24], [19, 166], [281, 300], [140, 470], [160, 476]]) {
+        if (close(Array.from(rv.getImageData(x, y, 1, 1).data), Array.from(up.getImageData(x, y, 1, 1).data))) frameSame++; f++;
+      }
+      out.push({ id, art: art / n, frame: frameSame / f });
+    }
+    return out;
+  });
+  ok(rvCheck.every((r) => r.art >= 0.85), '逆位圖的插畫是正位插畫繞畫框中心旋轉 180 度（' + rvCheck.map((r) => r.id + ' ' + Math.round(r.art * 100) + '%').join('、') + '）');
+  ok(rvCheck.every((r) => r.frame === 1), '逆位圖的金框、四角與底部徽章與正位相同（保持正向）');
 
   console.log('【離線準備】');
   await waitOffline(page);
@@ -128,10 +155,10 @@ async function quick(page) {
     const img = slot.querySelector('.face-front img');
     const cap = slot.querySelector('.tile-cap');
     const pos = slot.querySelector('.tile-pos');
-    const m = getComputedStyle(img).transform;
+    const m = img.getAttribute('src');
     return { m, capT: getComputedStyle(cap).transform, posT: getComputedStyle(pos).transform, label: cap.textContent };
   });
-  ok(rev.m === 'matrix(-1, 0, 0, -1, 0, 0)', '逆位插畫旋轉 180 度');
+  ok(/^cards\/rv\//.test(rev.m), '逆位使用「插畫倒置、金框正向」的逆位圖');
   ok(rev.capT === 'none' && rev.posT === 'none' && /逆位/.test(rev.label), '牌名、牌位與「逆位」文字保持正向');
   await page.screenshot({ path: path.join(SHOTS, '06-reversed.png') });
   await page.click('#btn-save');
@@ -209,9 +236,9 @@ async function quick(page) {
   const recRev = await page.evaluate((r) => {
     const i = r.cards.findIndex((c) => c.rev);
     const tile = document.querySelectorAll('#record-body .slots .tile')[i];
-    return { m: getComputedStyle(tile.querySelector('img')).transform, cap: getComputedStyle(tile.querySelector('.tile-cap')).transform, txt: tile.textContent };
+    return { m: tile.querySelector('img').getAttribute('src'), cap: getComputedStyle(tile.querySelector('.tile-cap')).transform, txt: tile.textContent };
   }, revRec);
-  ok(recRev.m === 'matrix(-1, 0, 0, -1, 0, 0)' && recRev.cap === 'none' && /逆位/.test(recRev.txt), '歷史紀錄：逆位插畫倒置、文字正向');
+  ok(/^cards\/rv\//.test(recRev.m) && recRev.cap === 'none' && /逆位/.test(recRev.txt), '歷史紀錄：逆位插畫倒置、文字正向');
   await page.screenshot({ path: path.join(SHOTS, '10-record.png'), fullPage: true });
 
   console.log('【結果卡：兩款配色、預覽＝下載、逆位、私密資訊】');
@@ -247,18 +274,20 @@ async function quick(page) {
     async function canvasFor(pal) { return window.RESULTCARD.render(data, pal); }
     const wine = await canvasFor('wine'), parch = await canvasFor('parchment');
     const px = (cv, x, y) => Array.from(cv.getContext('2d').getImageData(x, y, 1, 1).data);
-    // 逆位：結果卡中的牌圖應等於原圖旋轉 180 度
+    // 逆位：結果卡中的牌圖應等於逆位圖（金框正向、插畫倒置），而不是正位圖
     const i = rec.cards.findIndex((c) => c.rev);
-    const img = await new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.src = 'cards/' + rec.cards[i].id + '.svg'; });
-    const ref = document.createElement('canvas'); ref.width = 300; ref.height = 500;
-    ref.getContext('2d').drawImage(img, 0, 0, 300, 500);
+    const load = (src) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.src = src; });
+    const draw = (im) => { const c = document.createElement('canvas'); c.width = 300; c.height = 500; c.getContext('2d').drawImage(im, 0, 0, 300, 500); return c; };
+    const ref = draw(await load('cards/rv/' + rec.cards[i].id + '.svg'));
+    const up = draw(await load('cards/' + rec.cards[i].id + '.svg'));
     const x0 = (1080 - 960) / 2 + i * 330, y0 = 540;
     let match = 0, matchUnrot = 0, n = 0;
     for (let k = 0; k < 40; k++) {
       const x = 40 + (k * 53) % 220, y = 60 + (k * 97) % 380;
       const a = px(wine, x0 + x, y0 + y);
-      const r = Array.from(ref.getContext('2d').getImageData(299 - x, 499 - y, 1, 1).data);
-      const u = Array.from(ref.getContext('2d').getImageData(x, y, 1, 1).data);
+      const sx = Math.round(x * 300 / 300), sy = Math.round(y * 500 / 500);
+      const r = Array.from(ref.getContext('2d').getImageData(sx, sy, 1, 1).data);
+      const u = Array.from(up.getContext('2d').getImageData(sx, sy, 1, 1).data);
       const close = (p, q) => Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) + Math.abs(p[2] - q[2]) < 40;
       if (close(a, r)) match++; if (close(a, u)) matchUnrot++; n++;
     }
@@ -266,7 +295,7 @@ async function quick(page) {
   }, revRec);
   ok(pix.wineBg[0] > pix.wineBg[2] && pix.wineBg[0] < 120, '酒紅古金背景為深酒紅');
   ok(pix.parchBg[0] > 220 && pix.parchBg[1] > 200, '羊皮紙米白背景為米白');
-  ok(pix.match >= pix.n * 0.85 && pix.match > pix.matchUnrot, `PNG 中逆位牌插畫旋轉 180 度（吻合 ${pix.match}/${pix.n}）`);
+  ok(pix.match >= pix.n * 0.85 && pix.match > pix.matchUnrot, `PNG 中逆位牌使用逆位圖（吻合 ${pix.match}/${pix.n}）`);
   const priv = await page.evaluate((rec) => JSON.stringify(window.__YUEXIA__.cardData(rec)), revRec);
   ok(!/測試提問|曖昧中|交往中|分開後/.test(priv) && !priv.includes(revRec.question || '@@none@@'), '結果卡資料不含私人提問與感情情境');
   await page.click('#card-close');

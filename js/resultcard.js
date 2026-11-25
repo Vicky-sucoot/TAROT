@@ -136,7 +136,8 @@
     var n = data.cards.length;
     var Lo = layout(opts.format === 'square' ? 'square' : 'portrait', n);
     var W = Lo.W, H = Lo.H;
-    var srcs = data.cards.map(function (c) { return 'cards/' + c.id + '.svg'; });
+    // 逆位直接使用「金框正向、插畫倒置」的逆位圖
+    var srcs = data.cards.map(function (c) { return (c.rev ? 'cards/rv/' : 'cards/') + c.id + '.svg'; });
     return Promise.all(srcs.map(loadImage)).then(function (imgs) {
       var cv = document.createElement('canvas');
       cv.width = W; cv.height = H;
@@ -192,12 +193,7 @@
           ctx.restore();
           ctx.save();
           roundRect(ctx, x, y0, cw, ch, 14 * cw / 300); ctx.clip();
-          if (c.rev) { // 逆位：只旋轉插畫
-            ctx.translate(x + cw / 2, y0 + ch / 2); ctx.rotate(Math.PI);
-            ctx.drawImage(imgs[i], -cw / 2, -ch / 2, cw, ch);
-          } else {
-            ctx.drawImage(imgs[i], x, y0, cw, ch);
-          }
+          ctx.drawImage(imgs[i], x, y0, cw, ch);
           ctx.restore();
 
           var cx = x + cw / 2;

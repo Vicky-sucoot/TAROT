@@ -170,6 +170,16 @@
       <div class="chips filter-chips" id="history-filters" role="radiogroup" aria-label="主題篩選"></div>
       <ul class="history-list" id="history-list"></ul>
       <p class="empty" id="history-empty" hidden></p>
+      <section class="panel backup-panel" aria-labelledby="backup-title">
+        <h3 class="backup-title" id="backup-title">備份與還原</h3>
+        <p class="note">把這台裝置上的占卜紀錄、回顧筆記與結果卡設定存成一個檔案，可以存到 iCloud 雲碟或「檔案」App。換手機、清除瀏覽器資料，或想把 Safari 的紀錄搬到主畫面版本時，再用「匯入紀錄」還原。已經存在的紀錄不會重複匯入。</p>
+        <div class="backup-actions">
+          <button class="btn btn-ghost" type="button" id="btn-export">匯出紀錄</button>
+          <button class="btn btn-ghost" type="button" id="btn-import">匯入紀錄</button>
+        </div>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+        <p class="note">備份檔只在你的裝置上產生，不會上傳。檔案裡有你的提問與筆記，請自行妥善保管。</p>
+      </section>
       <p class="note">紀錄只保存在這台裝置的目前瀏覽器中。iPhone 上，Safari 與主畫面版本的紀錄、配色分開保存，彼此看不到。</p>
     </section>
 
@@ -254,6 +264,7 @@
 <script src="js/reading.js"></script>
 <script src="js/store.js"></script>
 <script src="js/resultcard.js"></script>
+<script src="js/backup.js"></script>
 <script src="js/offline.js"></script>
 <script src="js/app.js"></script>
 </body>

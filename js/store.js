@@ -48,6 +48,28 @@
     remove: function (id) {
       saveHistory(loadHistory().filter(function (r) { return r.id !== id; }));
     },
+    // 更新單筆紀錄的部分欄位（例如回顧筆記）
+    update: function (id, patch) {
+      var list = loadHistory(), found = false;
+      list.forEach(function (r) {
+        if (r.id !== id) return;
+        found = true;
+        for (var k in patch) { if (patch[k] === null) delete r[k]; else r[k] = patch[k]; }
+      });
+      return found && saveHistory(list);
+    },
+    all: function () { return loadHistory(); },
+    // 匯入：依 id 合併，已存在的紀錄不覆蓋
+    importMany: function (records) {
+      var list = loadHistory(), ids = {}, added = 0, dup = 0;
+      list.forEach(function (r) { ids[r.id] = true; });
+      records.forEach(function (r) {
+        if (ids[r.id]) { dup++; return; }
+        ids[r.id] = true; list.push(r); added++;
+      });
+      var ok = added ? saveHistory(list) : true;
+      return { ok: ok, added: added, dup: dup };
+    },
     getPalette: function () {
       var p = get(KEY_PALETTE);
       return PALETTES.indexOf(p) >= 0 ? p : 'wine';

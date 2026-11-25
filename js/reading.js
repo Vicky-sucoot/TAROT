@@ -25,8 +25,32 @@
         { id: 'after', label: '分開後' },
         { id: 'none', label: '略過' }
       ]
+    },
+    choice: {
+      id: 'choice',
+      name: '二選一牌陣',
+      positions: ['選項 A 的發展', '選項 B 的發展', '我真正在意的事'],
+      options: [
+        { id: 'love', label: '感情' },
+        { id: 'work', label: '工作' },
+        { id: 'money', label: '財運' },
+        { id: 'general', label: '綜合' }
+      ]
+    },
+    flow: {
+      id: 'flow',
+      name: '時間之流牌陣',
+      positions: ['過去的影響', '現在的狀態', '未來的走向', '需要留意', '行動建議'],
+      options: [
+        { id: 'love', label: '感情' },
+        { id: 'work', label: '工作' },
+        { id: 'money', label: '財運' },
+        { id: 'general', label: '綜合' }
+      ]
     }
   };
+  var ORDER = ['guide', 'relation', 'choice', 'flow'];
+  var NUM = { 3: '三', 5: '五' };
 
   var CATEGORIES = [
     { id: 'all', label: '全部' },
@@ -126,6 +150,12 @@
     none: ['關於「{k}」，我想讓對方知道的一件事是什麼？我打算怎麼說？', '從可以觀察到的互動來看，這段關係讓我感到安心，還是消耗？', '如果「{k1}」就是我心裡的感受，我願意為它做出哪一個溝通選擇？']
   };
 
+  var CHOICE_Q = [
+    '如果完全不考慮別人的期待，我會選哪一個？「{k}」在提醒我什麼？',
+    '兩個選項裡，哪一個更貼近「{k}」？我願意為它承擔什麼？',
+    '一年後回頭看，我希望自己是因為什麼理由做出這個選擇？'
+  ];
+
   var PUBLIC_UP = [
     '讓「{k}」成為下一步的方向，答案就在你心裡。',
     '帶著「{k}」前行，月光會照亮你的路。',
@@ -167,14 +197,17 @@
     var f = face(card, rev);
     var kw = f.k.join('、');
     var label = '「' + card.name + '」' + (rev ? '逆位' : '正位');
-    var lead;
-    if (spreadId === 'guide') {
-      lead = ['這張牌描述你目前的狀態。', '這是目前可能卡住你的部分。', '這是你可以嘗試的方向。'][idx];
-    } else {
-      lead = ['這張牌反映你心裡的感受與期待。', '這是你們之間目前可以觀察到的互動模式。', '這是你下一步可以考慮的方向。'][idx];
-    }
+    var lead = ({
+      guide: ['這張牌描述你目前的狀態。', '這是目前可能卡住你的部分。', '這是你可以嘗試的方向。'],
+      relation: ['這張牌反映你心裡的感受與期待。', '這是你們之間目前可以觀察到的互動模式。', '這是你下一步可以考慮的方向。'],
+      choice: ['這張牌描述選擇 A 之後可能的發展。', '這張牌描述選擇 B 之後可能的發展。', '這張牌反映你在這個選擇裡真正在意的事。'],
+      flow: ['這張牌是過去留下的影響。', '這張牌描述你現在的狀態。', '這張牌是照目前方向走下去，未來可能的走向。', '這是需要特別留意的地方。', '這是你可以採取的行動。']
+    })[spreadId][idx];
     return lead + label + '的關鍵詞是：' + kw + '。';
   }
+
+  function adviceIndex(spreadId) { return spreadId === 'flow' ? 4 : spreadId === 'choice' ? -1 : 2; }
+  function keyIndex(spreadId) { return spreadId === 'flow' ? 4 : 2; }
 
   function nuance(spreadId, idx, card, rev) {
     var k = face(card, rev).k[0];
@@ -186,7 +219,15 @@
         ? '這個互動模式中，「' + k + '」可能正在影響你們，試著觀察它在什麼情況下出現。'
         : '「' + k + '」是你們互動中已經存在的力量，可以留意它如何被雙方感受到。';
     }
-    if (idx === 2 && rev) {
+    if (spreadId === 'flow' && idx === 3 && !rev) {
+      return '雖然是正位，放在「需要留意」的位置，也提醒你別讓「' + k + '」走得太過頭。';
+    }
+    if (spreadId === 'choice' && idx < 2) {
+      return rev
+        ? '逆位代表這條路上可能有「' + k + '」的課題，不一定是壞選項，而是要先想好怎麼面對。'
+        : '正位代表這條路上「' + k + '」的能量比較順，但仍要對照你真正在意的事。';
+    }
+    if (idx === adviceIndex(spreadId) && rev) {
       return '逆位出現在建議的位置，提醒你先留意「' + k + '」，從調整它開始，而不是急著往前衝。';
     }
     if (card.suit === 'major') {
@@ -210,17 +251,29 @@
 
     // ── 整體摘要 ──
     var summary = [];
+    var n = cards.length;
     if (input.spread === 'guide') {
       summary.push('現況呈現「' + ks[0] + '」，阻礙落在「' + ks[1] + '」，' +
         (cards[2].rev ? '而建議牌提醒你先留意「' + ks[2] + '」，從調整它開始。' : '而「' + ks[2] + '」是你可以著手的方向。'));
-    } else {
+    } else if (input.spread === 'relation') {
       summary.push('你心裡的感受與期待和「' + ks[0] + '」有關；目前的互動呈現「' + ks[1] + '」；' +
         (cards[2].rev ? '下一步可以先留意「' + ks[2] + '」，再決定怎麼回應。' : '下一步可以朝「' + ks[2] + '」嘗試。'));
+    } else if (input.spread === 'choice') {
+      summary.push('選項 A 呈現「' + ks[0] + '」，選項 B 呈現「' + ks[1] + '」，而你真正在意的是「' + ks[2] + '」。');
+      var ra = cards[0].rev, rb = cards[1].rev;
+      summary.push(ra === rb
+        ? (ra ? '兩個選項都是逆位，兩條路各有要面對的課題，也許先別急著選，或想想有沒有第三種可能。' : '兩個選項都是正位，兩條路都走得通，關鍵在於哪一條更貼近你在意的事。')
+        : '就目前的能量來看，選項 ' + (ra ? 'B' : 'A') + ' 走起來比較順，選項 ' + (ra ? 'A' : 'B') + ' 則需要先處理一些課題。');
+      summary.push('牌不替你做決定，它幫你看清每條路的樣子，最後仍由你選擇。');
+    } else {
+      summary.push('從過去的「' + ks[0] + '」，走到現在的「' + ks[1] + '」，未來可能朝向「' + ks[2] + '」。需要留意「' + ks[3] + '」，' +
+        (cards[4].rev ? '行動上先調整「' + ks[4] + '」。' : '行動上可以朝「' + ks[4] + '」前進。'));
     }
 
+    var all = NUM[n] ? NUM[n] + '張' : '全部';
     var majors = cards.filter(function (x) { return x.card.suit === 'major'; });
     if (majors.length === 0) {
-      summary.push('三張都是小阿爾克那，事情多半落在日常可以調整的範圍，小小的改變就能帶來不同。');
+      summary.push(all + '都是小阿爾克那，事情多半落在日常可以調整的範圍，小小的改變就能帶來不同。');
     } else if (majors.length === 1) {
       summary.push('「' + majors[0].card.name + '」是這次唯一的大阿爾克那，它所在的位置是值得你特別花心思的關鍵。');
     } else {
@@ -228,16 +281,26 @@
     }
 
     var revCount = cards.filter(function (x) { return x.rev; }).length;
-    summary.push([
-      '三張都是正位，能量流動得比較順，適合把想法化為行動。',
-      '有一張逆位，提醒你在某個環節放慢腳步、回頭檢查。',
-      '有兩張逆位，目前可能有些卡住或內耗，先照顧好自己，再處理外在的事。',
-      '三張都是逆位，這段時間比較適合沉澱與向內整理，而不是硬推進度。'
-    ][revCount]);
+    if (n === 3) {
+      summary.push([
+        '三張都是正位，能量流動得比較順，適合把想法化為行動。',
+        '有一張逆位，提醒你在某個環節放慢腳步、回頭檢查。',
+        '有兩張逆位，目前可能有些卡住或內耗，先照顧好自己，再處理外在的事。',
+        '三張都是逆位，這段時間比較適合沉澱與向內整理，而不是硬推進度。'
+      ][revCount]);
+    } else if (revCount === 0) {
+      summary.push(all + '都是正位，能量流動得比較順，適合把想法化為行動。');
+    } else if (revCount === n) {
+      summary.push(all + '都是逆位，這段時間比較適合沉澱與向內整理，而不是硬推進度。');
+    } else if (revCount * 2 < n) {
+      summary.push('有 ' + revCount + ' 張逆位，整體還算順，但在逆位出現的環節要放慢腳步、回頭檢查。');
+    } else {
+      summary.push('有 ' + revCount + ' 張逆位，目前可能有些卡住或內耗，先照顧好自己，再處理外在的事。');
+    }
 
     var suitCount = {};
     cards.forEach(function (x) { if (x.card.suit !== 'major') suitCount[x.card.suit] = (suitCount[x.card.suit] || 0) + 1; });
-    var dom = Object.keys(suitCount).filter(function (s) { return suitCount[s] >= 2; })[0];
+    var dom = Object.keys(suitCount).filter(function (s) { return suitCount[s] >= (n > 3 ? 3 : 2); })[0];
     if (dom) summary.push(SUIT_NOTE[dom]);
     var courts = cards.filter(function (x) { return x.card.suit !== 'major' && x.card.rank >= 11; }).length;
     if (courts >= 2) summary.push('出現多張宮廷牌，人的態度與角色是這次的關鍵，也可能代表你內在不同的面向。');
@@ -271,8 +334,10 @@
     });
 
     var seed = hash(cards.map(function (x) { return x.card.id + (x.rev ? 'r' : 'u'); }).join(''));
-    var question = fill(QUESTIONS[lens][seed % 3], { k: ks[2], k1: ks[0] });
-    var publicLine = fill((cards[2].rev ? PUBLIC_RV : PUBLIC_UP)[seed % 3], { k: ks[2] });
+    var ki = keyIndex(input.spread);
+    var qset = input.spread === 'choice' ? CHOICE_Q : QUESTIONS[lens];
+    var question = fill(qset[seed % 3], { k: ks[ki], k1: ks[0] });
+    var publicLine = fill((cards[ki].rev ? PUBLIC_RV : PUBLIC_UP)[seed % 3], { k: ks[ki] });
 
     return {
       summary: summary.join(''),
@@ -285,6 +350,8 @@
 
   root.READING = {
     SPREADS: SPREADS,
+    ORDER: ORDER,
+    NUM: NUM,
     CATEGORIES: CATEGORIES,
     TOPIC_LABEL: TOPIC_LABEL,
     CONTEXT_LABEL: CONTEXT_LABEL,

@@ -3,6 +3,10 @@
   'use strict';
   var KEY_HISTORY = 'yuexia.history.v1';
   var KEY_PALETTE = 'yuexia.palette';
+  var KEY_FORMAT = 'yuexia.cardFormat';
+  var KEY_DATE = 'yuexia.cardDate';
+  var KEY_DAILY = 'yuexia.daily';
+  var PALETTES = ['wine', 'parchment', 'navy'];
   var memory = {};
 
   function get(key) {
@@ -46,9 +50,18 @@
     },
     getPalette: function () {
       var p = get(KEY_PALETTE);
-      return p === 'parchment' ? 'parchment' : 'wine';
+      return PALETTES.indexOf(p) >= 0 ? p : 'wine';
     },
-    setPalette: function (p) { set(KEY_PALETTE, p === 'parchment' ? 'parchment' : 'wine'); }
+    setPalette: function (p) { set(KEY_PALETTE, PALETTES.indexOf(p) >= 0 ? p : 'wine'); },
+    getCardFormat: function () { return get(KEY_FORMAT) === 'square' ? 'square' : 'portrait'; },
+    setCardFormat: function (f) { set(KEY_FORMAT, f === 'square' ? 'square' : 'portrait'); },
+    getShowDate: function () { return get(KEY_DATE) === '1'; },
+    setShowDate: function (on) { set(KEY_DATE, on ? '1' : '0'); },
+    // 每日一張：同一天固定同一張牌
+    getDaily: function (dateKey) {
+      try { var d = JSON.parse(get(KEY_DAILY) || 'null'); return d && d.date === dateKey ? d : null; } catch (e) { return null; }
+    },
+    setDaily: function (d) { set(KEY_DAILY, JSON.stringify(d)); }
   };
 
   root.STORE = Store;

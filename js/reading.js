@@ -347,7 +347,9 @@
     var ki = keyIndex(input.spread);
     var qset = input.spread === 'choice' ? CHOICE_Q : QUESTIONS[lens];
     var question = fill(qset[seed % 3], { k: ks[ki], k1: ks[0] });
-    var publicLine = fill((cards[ki].rev ? PUBLIC_RV : PUBLIC_UP)[seed % 3], { k: ks[ki] });
+    // 結果卡指引：優先使用每張牌專屬的公開指引句，沒有時才用套句
+    var pl = root.PUBLIC_LINES && root.PUBLIC_LINES[cards[ki].card.id];
+    var publicLine = pl ? pl[cards[ki].rev ? 1 : 0] : fill((cards[ki].rev ? PUBLIC_RV : PUBLIC_UP)[seed % 3], { k: ks[ki] });
 
     return {
       summary: summary.join(''),

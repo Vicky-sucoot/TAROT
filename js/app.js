@@ -87,7 +87,7 @@
   function dateKey(d) { d = d || new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 
   // ───── 路由 ─────
-  var VIEWS = ['home', 'setup', 'draw', 'history', 'record', 'gallery', 'card', 'stats', 'settings'];
+  var VIEWS = ['home', 'setup', 'draw', 'history', 'record', 'gallery', 'card', 'stats', 'settings', 'journal'];
   var draw = null; // 目前這一局
   var setupSpread = 'guide';
   var setupOption = { guide: 'general', relation: 'none', choice: 'general', flow: 'general' };
@@ -117,12 +117,14 @@
     if ((m = /^card-([mwcsp]\d\d)$/.exec(h)) && T.BY_ID[m[1]]) return showCard(m[1]);
     if (h === 'stats') return showStats();
     if (h === 'settings') return showSettings();
+    if (h === 'journal') return showJournal();
     show('home');
   }
   window.addEventListener('hashchange', route);
   $('btn-back').onclick = function () {
     var h = location.hash;
     if (h.indexOf('#record-') === 0 || h === '#stats') go('#history');
+    else if (h === '#journal') go('#home');
     else if (h.indexOf('#card-') === 0) go('#cards');
     else if (h === '#draw' && draw) go('#setup-' + draw.spread);
     else go('#home');
@@ -136,6 +138,7 @@
   $('btn-history').onclick = function () { historyFilter = 'all'; $('history-search').value = ''; go('#history'); };
   $('btn-gallery').onclick = function () { go('#cards'); };
   $('btn-stats').onclick = function () { go('#stats'); };
+  $('btn-journal').onclick = function () { journalMonth = null; go('#journal'); };
   $('btn-settings').onclick = function () { go('#settings'); };
   $('offline-line').onclick = function () { go('#settings'); };
   $('history-to-settings').onclick = function () { go('#settings'); };
@@ -247,7 +250,9 @@
     go('#draw');
     // 洗牌動畫
     var st = $('draw-status');
-    st.innerHTML = '<div class="shuffle-stage" aria-hidden="true"><img src="cards/back.svg" alt=""><img src="cards/back.svg" alt=""><img src="cards/back.svg" alt=""></div>洗牌中…';
+    var fan = '';
+    for (var k = 0; k < 7; k++) fan += '<img src="cards/back.svg" alt="" style="--i:' + (k - 3) + '">';
+    st.innerHTML = '<div class="shuffle-stage" aria-hidden="true">' + fan + '</div>洗牌中…';
     wait(isReduced() ? 250 : 1600).then(function () {
       if (!draw || draw.picks.length) return;
       st.textContent = '請選出 ' + draw.n + ' 張牌';
@@ -366,6 +371,7 @@
     var btn = document.querySelector('[data-slot="' + i + '"]');
     btn.classList.remove('is-next');
     btn.classList.add('is-flipped');
+    if (c.suit === 'major') btn.classList.add('major-flash'); // 大阿爾克那翻開時的金光
     btn.disabled = true;
     btn.setAttribute('aria-label', draw.spreadDef.positions[i] + '：' + c.name + (p.rev ? '逆位' : '正位'));
     draw.flipped++;
@@ -542,9 +548,9 @@
 
   // ───── 備份與還原 ─────
   function backupFile() {
-    var data = window.BACKUP.build(ST.all(), { palette: ST.getPalette(), format: ST.getCardFormat(), showDate: ST.getShowDate() });
+    var data = window.BACKUP.build(ST.all(), { palette: ST.getPalette(), format: ST.getCardFormat(), showDate: ST.getShowDate() }, ST.getDailyLog());
     var name = 'yuexia-backup-' + fileStamp(Date.now()) + '.json';
-    return { file: new File([JSON.stringify(data)], name, { type: 'application/json' }), count: data.records.length };
+    return { file: new File([JSON.stringify(data)], name, { type: 'application/json' }), count: data.records.length, days: Object.keys(data.dailyLog).length };
   }
   function downloadFile(file) {
     var url = URL.createObjectURL(file);
@@ -555,7 +561,7 @@
   }
   $('btn-export').onclick = function () {
     var b = backupFile();
-    if (!b.count) { toast('目前沒有紀錄可以匯出'); return; }
+    if (!b.count && !b.days) { toast('目前沒有紀錄可以匯出'); return; }
     var canShare = false;
     try { canShare = !!(navigator.canShare && navigator.share && navigator.canShare({ files: [b.file] })); } catch (e) { canShare = false; }
     if (canShare) {
@@ -577,15 +583,18 @@
     f.text().then(function (text) {
       var res;
       try { res = window.BACKUP.parse(text); } catch (e) { toast(e.message); return; }
-      if (!res.records.length) { toast('備份檔裡沒有可以匯入的紀錄' + (res.skipped ? '（' + res.skipped + ' 筆格式不符）' : '')); return; }
-      return confirmBox('備份檔裡有 ' + res.records.length + ' 筆紀錄，將合併到目前的紀錄中，已經存在的不會重複。也會套用備份裡的結果卡設定。確定匯入嗎？').then(function (ok) {
+      var days = Object.keys(res.dailyLog).length;
+      if (!res.records.length && !days) { toast('備份檔裡沒有可以匯入的紀錄' + (res.skipped ? '（' + res.skipped + ' 筆格式不符）' : '')); return; }
+      return confirmBox('備份檔裡有 ' + res.records.length + ' 筆紀錄' + (days ? '、' + days + ' 天的今日指引' : '') + '，將合併到目前的紀錄中，已經存在的不會重複。也會套用備份裡的結果卡設定。確定匯入嗎？').then(function (ok) {
         if (!ok) return;
         var r = ST.importMany(res.records);
         if (!r.ok) { toast('儲存空間無法使用，匯入失敗'); return; }
         if (res.settings.palette) ST.setPalette(res.settings.palette);
         if (res.settings.format) ST.setCardFormat(res.settings.format);
         if (res.settings.showDate !== null) ST.setShowDate(res.settings.showDate);
+        var addedDays = ST.importDailyLog(res.dailyLog);
         var msg = '已匯入 ' + r.added + ' 筆';
+        if (addedDays) msg += '、' + addedDays + ' 天今日指引';
         if (r.dup) msg += '，' + r.dup + ' 筆已存在而略過';
         if (res.skipped) msg += '，' + res.skipped + ' 筆格式不符';
         toast(msg);
@@ -694,8 +703,10 @@
     var seed = 0; for (var i = 0; i < d.date.length; i++) seed += d.date.charCodeAt(i);
     return arr[seed % arr.length].replace('{k}', f.k[0]);
   }
+  function moodOf(date) { var e = ST.getDailyLog()[date]; return e && e.mood ? e.mood : ''; }
   function renderDaily(animate) {
     var d = ST.getDaily(dateKey());
+    if (d) ST.logDaily(d); // 舊版只存當天，補進紀錄
     var card = $('daily-card');
     if (!d) {
       card.classList.remove('is-flipped'); card.disabled = false;
@@ -712,8 +723,15 @@
     var showText = function () {
       $('daily-text').innerHTML = '<p><span class="daily-name">' + esc(c.name) + '</span> ' + oriHTML(d.rev) + '</p>' +
         '<p class="daily-line">' + esc(dailyLine(d)) + '</p>' +
-        '<p class="daily-more"><button type="button" class="link-btn" id="daily-detail">查看這張牌的牌義</button></p>';
+        '<div class="daily-mood"><input type="text" id="daily-mood" maxlength="60" placeholder="今天的心情一句話（可留白）" value="' + esc(moodOf(d.date)) + '">' +
+        '<button type="button" class="btn btn-ghost btn-small" id="daily-mood-save">記下</button></div>' +
+        '<p class="daily-more"><button type="button" class="link-btn" id="daily-detail">查看牌義</button>　<button type="button" class="link-btn" id="daily-journal">今日指引紀錄</button></p>';
       $('daily-detail').onclick = function () { go('#card-' + d.id); };
+      $('daily-journal').onclick = function () { journalMonth = null; go('#journal'); };
+      $('daily-mood-save').onclick = function () {
+        ST.setDailyMood(d.date, $('daily-mood').value.trim());
+        toast($('daily-mood').value.trim() ? '已記下今天的心情' : '已清除今天的心情');
+      };
     };
     if (animate) { card.classList.add('is-flipped'); wait(isReduced() ? 50 : 500).then(showText); }
     else { card.classList.add('is-flipped'); showText(); }
@@ -821,6 +839,91 @@
   }
 
   // ───── 設定 ─────
+  // ───── 今日指引紀錄（月曆） ─────
+  var journalMonth = null, journalDay = null;
+  function showJournal() {
+    var now = new Date();
+    if (!journalMonth) journalMonth = { y: now.getFullYear(), m: now.getMonth() };
+    renderJournal();
+    show('journal', '今日指引紀錄');
+  }
+  function renderJournal() {
+    var log = ST.getDailyLog();
+    var y = journalMonth.y, m = journalMonth.m;
+    var first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate();
+    var today = dateKey();
+    var cells = '';
+    for (var i = 0; i < first.getDay(); i++) cells += '<span class="jc jc-empty" aria-hidden="true"></span>';
+    var monthEntries = [];
+    for (var d = 1; d <= days; d++) {
+      var key = y + '-' + pad(m + 1) + '-' + pad(d);
+      var e = log[key];
+      var cls = 'jc' + (key === today ? ' jc-today' : '') + (key === journalDay ? ' jc-sel' : '');
+      if (e) {
+        monthEntries.push({ key: key, e: e });
+        var c = T.BY_ID[e.id];
+        cells += '<button type="button" class="' + cls + ' jc-has" data-jday="' + key + '" aria-label="' + (m + 1) + ' 月 ' + d + ' 日：' + esc(c.name) + (e.rev ? '逆位' : '正位') + (e.mood ? '，有心情紀錄' : '') + '">' +
+          '<span class="jc-num">' + d + '</span><img src="' + (e.rev ? c.imgRv : c.img) + '" alt="">' + (e.mood ? '<span class="jc-dot" aria-hidden="true"></span>' : '') + '</button>';
+      } else {
+        cells += '<span class="' + cls + '"><span class="jc-num">' + d + '</span></span>';
+      }
+    }
+    var suit = { major: 0, wands: 0, cups: 0, swords: 0, pentacles: 0 }, rev = 0, count = {};
+    monthEntries.forEach(function (x) { var c = T.BY_ID[x.e.id]; suit[c.suit]++; if (x.e.rev) rev++; count[x.e.id] = (count[x.e.id] || 0) + 1; });
+    var n = monthEntries.length;
+    var summary = n ? '<div class="reading-block"><h3>這個月的回顧</h3>' +
+      '<p id="j-summary">這個月抽了 <b>' + n + '</b> 天，其中 ' + rev + ' 天是逆位。' + monthNote(suit, n) + '</p>' +
+      bars(['major', 'wands', 'cups', 'swords', 'pentacles'].map(function (s) { return { label: T.SUITS[s].name, v: suit[s] }; }), n) + repeatNote(count) + '</div>'
+      : '<p class="empty">這個月還沒有今日指引紀錄。<br>回到首頁抽一張今日的牌吧。</p>';
+    var sel = journalDay && log[journalDay] ? dayDetail(journalDay, log[journalDay]) : '';
+    $('journal-body').innerHTML =
+      '<div class="j-nav"><button type="button" class="btn btn-ghost btn-small" id="j-prev" aria-label="上個月">‹</button>' +
+      '<h3 class="j-title" id="j-title">' + y + ' 年 ' + (m + 1) + ' 月</h3>' +
+      '<button type="button" class="btn btn-ghost btn-small" id="j-next" aria-label="下個月">›</button></div>' +
+      '<div class="j-week" aria-hidden="true"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>' +
+      '<div class="j-grid">' + cells + '</div>' + sel + summary;
+    $('j-prev').onclick = function () { journalMonth = m === 0 ? { y: y - 1, m: 11 } : { y: y, m: m - 1 }; journalDay = null; renderJournal(); };
+    $('j-next').onclick = function () { journalMonth = m === 11 ? { y: y + 1, m: 0 } : { y: y, m: m + 1 }; journalDay = null; renderJournal(); };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-jday]'), function (b) {
+      b.onclick = function () { journalDay = b.getAttribute('data-jday'); renderJournal(); };
+    });
+    if (sel) {
+      $('j-mood-save').onclick = function () {
+        ST.setDailyMood(journalDay, $('j-mood').value.trim());
+        toast($('j-mood').value.trim() ? '已更新心情' : '已清除心情');
+        renderJournal();
+      };
+      $('j-card').onclick = function () { go('#card-' + log[journalDay].id); };
+    }
+  }
+  function dayDetail(key, e) {
+    var c = T.BY_ID[e.id];
+    var parts = key.split('-');
+    return '<div class="reading-block j-detail"><h3>' + parseInt(parts[1], 10) + ' 月 ' + parseInt(parts[2], 10) + ' 日</h3>' +
+      '<div class="j-detail-row"><img src="' + (e.rev ? c.imgRv : c.img) + '" alt="' + esc(c.name) + '">' +
+      '<div><p><span class="rd-name">' + esc(c.name) + '</span> ' + oriHTML(e.rev) + '</p><p>' + esc(dailyLine({ date: key, id: e.id, rev: e.rev })) + '</p>' +
+      '<button type="button" class="link-btn j-link" id="j-card">查看牌義</button></div></div>' +
+      '<label class="field"><span class="field-label" style="font-size:16px">那天的心情</span><input type="text" id="j-mood" maxlength="60" value="' + esc(e.mood || '') + '" placeholder="寫一句話（可留白）"></label>' +
+      '<div class="note-actions"><button type="button" class="btn btn-primary btn-small" id="j-mood-save">儲存心情</button></div></div>';
+  }
+  function monthNote(suit, n) {
+    var top = Object.keys(suit).sort(function (a, b) { return suit[b] - suit[a]; })[0];
+    if (!suit[top] || suit[top] < 2) return '';
+    var note = {
+      major: '大阿爾克那出現得最多，這個月似乎有一些值得深思的課題。',
+      wands: '權杖出現得最多，這個月的關鍵字是行動與熱情。',
+      cups: '聖杯出現得最多，這個月的重心落在感受與關係。',
+      swords: '寶劍出現得最多，這個月想得比較多，記得讓腦袋休息。',
+      pentacles: '錢幣出現得最多，這個月的重心在生活、工作與實際的事務。'
+    };
+    return note[top];
+  }
+  function repeatNote(count) {
+    var rep = Object.keys(count).filter(function (k) { return count[k] >= 2; });
+    if (!rep.length) return '';
+    return '<p class="reading-focus">重複出現的牌：' + rep.map(function (k) { return esc(T.BY_ID[k].name) + ' ' + count[k] + ' 次'; }).join('、') + '</p>';
+  }
+
   function syncSettings() {
     var pal = ST.getPalette(), fmt = ST.getCardFormat();
     Array.prototype.forEach.call(document.querySelectorAll('[data-set-palette]'), function (b) { b.setAttribute('aria-checked', b.getAttribute('data-set-palette') === pal); });

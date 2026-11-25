@@ -648,3 +648,59 @@ export function minify(svg) {
 export function svgDoc(body) {
   return minify(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="500" viewBox="0 0 300 500" stroke-linejoin="round" stroke-linecap="round">${defs()}${body}</svg>`) + '\n';
 }
+
+// ───── 背景場景元件（讓上半部較空的牌更豐富） ─────
+// 遠方小鎮：一排屋頂與尖塔
+export function town(y, x0 = 30, x1 = 270, fill = STONE) {
+  let s = '';
+  let x = x0, i = 0;
+  while (x < x1) {
+    const w = 14 + (i * 7) % 10, h = 14 + (i * 11) % 16;
+    s += P(`M${x},${y} V${y - h} L${x + w / 2},${y - h - 8} L${x + w},${y - h} V${y}Z`, i % 3 === 0 ? STONED : fill, { hatch: 'hl', sw: 0.8 });
+    s += `<rect x="${f(x + w / 2 - 1.5)}" y="${f(y - h + 4)}" width="3" height="4" fill="${GOLDL}" opacity="0.8"/>`;
+    if (i % 4 === 2) s += P(`M${x + w / 2 - 2},${y - h - 6} V${y - h - 22} L${x + w / 2},${y - h - 28} L${x + w / 2 + 2},${y - h - 22} V${y - h - 6}Z`, STONED, { hatch: null, sw: 0.7 });
+    x += w + 3; i++;
+  }
+  return s;
+}
+// 兩側攀藤花草
+export function vines(side = 'both', top = 60, bottom = 330) {
+  const one = (x, dir) => {
+    let d = `M${x},${bottom} `;
+    let leaves = '';
+    for (let y = bottom; y > top; y -= 34) {
+      d += `Q${x + dir * 14},${y - 17} ${x},${y - 34} `;
+      leaves += El(x + dir * 9, y - 12, 3, 6, GREENL, { hatch: null, sw: 0.6, rot: dir * 40 }) + El(x - dir * 6, y - 26, 2.6, 5, GREEN, { hatch: null, sw: 0.6, rot: -dir * 35 });
+      if ((bottom - y) % 68 === 0) leaves += rose(x + dir * 4, y - 20, 3.6);
+    }
+    return line(d, 1.6, '#5a6b34') + leaves;
+  };
+  return (side !== 'right' ? one(36, 1) : '') + (side !== 'left' ? one(264, -1) : '');
+}
+// 上方垂幔
+export function swag(fill = WINE) {
+  let s = '';
+  for (let i = 0; i < 4; i++) {
+    const x = 18 + i * 66;
+    s += P(`M${x},18 Q${x + 33},64 ${x + 66},18 L${x + 66},26 Q${x + 33},76 ${x},26Z`, fill, { hatch: 'hx', sw: 0.9 });
+    s += line(`M${x},26 Q${x + 33},76 ${x + 66},26`, 1.2, GOLDL);
+    s += Ci(x, 24, 3.4, GOLDL, { hatch: null, sw: 0.7 });
+  }
+  return s;
+}
+// 木柵欄
+export function fence(y, x0 = 20, x1 = 280) {
+  let s = line(`M${x0},${y - 10} H${x1} M${x0},${y - 3} H${x1}`, 2, BROWN);
+  for (let x = x0 + 6; x < x1; x += 16) s += P(`M${x - 2},${y + 2} V${y - 16} L${x},${y - 19} L${x + 2},${y - 16} V${y + 2}Z`, '#a8774a', { hatch: null, sw: 0.7 });
+  return s;
+}
+// 海上的小島與岩石
+export function islands(y) {
+  return P(`M30,${y} q18,-22 40,-14 q14,-10 26,4 Z`, STONED, { hatch: 'hl', sw: 0.8 }) +
+    P(`M196,${y} q12,-16 30,-10 q16,-8 30,6 Z`, STONED, { hatch: 'hl', sw: 0.8 }) +
+    tree(214, y - 12, 0.25, GREEN);
+}
+// 遠山剪影（淡色）
+export function farHills(y, fill = BLUEL) {
+  return `<path d="M18,${y} Q60,${y - 34} 100,${y - 12} Q150,${y - 46} 200,${y - 14} Q244,${y - 36} 282,${y - 10} V${y + 4} H18Z" fill="${fill}" opacity="0.55" stroke="${INK}" stroke-width="0.6"/>`;
+}

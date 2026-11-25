@@ -1,6 +1,6 @@
 /* 自動產生，請勿手動修改：node tools/build-manifest.mjs */
 self.PRECACHE = {
-  "version": "656735e84c4b",
+  "version": "f9985fca7835",
   "files": [
     "./",
     "index.html",

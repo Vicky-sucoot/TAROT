@@ -506,3 +506,71 @@ input[type="text"] { min-height: 48px; }
   20% { opacity: 1; }
   100% { opacity: 0; background-position: -40% 0; }
 }
+
+/* ── 牌陣說明 ── */
+.spread-guide { margin: 4px 0 14px; }
+.spread-guide summary { cursor: pointer; font-family: var(--serif); font-size: 17px; color: var(--gold-soft); min-height: 32px; }
+.spread-guide p { margin: 8px 0; font-size: 15px; }
+.spread-guide-ex-title { color: var(--text-soft); font-size: 14px !important; margin-bottom: 4px !important; }
+.example-list { display: flex; flex-direction: column; gap: 6px; }
+.example-q {
+  text-align: left; min-height: 40px; padding: 6px 12px; border-radius: 10px; cursor: pointer; font-size: 15px;
+  border: 1px dashed rgba(201, 164, 92, 0.7); background: transparent; color: var(--text);
+}
+.example-q:active { background: rgba(201, 164, 92, 0.15); }
+
+/* ───────── 淺色羊皮紙主題 ─────────
+   深色主題維持原本設計；淺色主題只重新定義文字色，並覆寫寫死深色背景的元件。 */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --text: #3a1c17;
+  --text-soft: #6b5140;
+  --gold-soft: #7a4f12;
+}
+[data-theme="light"] body {
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(184, 137, 58, 0.2), transparent 55%),
+    linear-gradient(180deg, #f4e8cc, #e7d4aa 70%);
+  background-color: #e7d4aa;
+}
+[data-theme="light"] .topbar { background: linear-gradient(180deg, rgba(244, 232, 204, 0.97), rgba(244, 232, 204, 0.9)); border-bottom-color: rgba(156, 118, 51, 0.5); }
+[data-theme="light"] .bottom-bar { background: linear-gradient(180deg, rgba(231, 212, 170, 0), rgba(231, 212, 170, 0.96) 30%); }
+[data-theme="light"] .pick-area { background: linear-gradient(180deg, rgba(231, 212, 170, 0.7), rgba(231, 212, 170, 0.98) 18%); border-top-color: rgba(156, 118, 51, 0.5); }
+[data-theme="light"] .panel,
+[data-theme="light"] .btn-ghost,
+[data-theme="light"] .draw-question,
+[data-theme="light"] .tile-card.is-empty,
+[data-theme="light"] .history-item button,
+[data-theme="light"] .stat-tile,
+[data-theme="light"] .jc:not(.jc-empty),
+[data-theme="light"] .set-opt,
+[data-theme="light"] .chip,
+[data-theme="light"] .mode-tabs,
+[data-theme="light"] .orient-switch { background: rgba(109, 26, 43, 0.06); }
+[data-theme="light"] .panel, [data-theme="light"] .history-item button, [data-theme="light"] .stat-tile { border-color: rgba(156, 118, 51, 0.55); }
+[data-theme="light"] .chip-group legend,
+[data-theme="light"] .chip,
+[data-theme="light"] .tile-name,
+[data-theme="light"] .hi-cards,
+[data-theme="light"] .daily-name,
+[data-theme="light"] .gallery-item,
+[data-theme="light"] .set-opt { color: var(--ink); }
+[data-theme="light"] .chip[aria-checked="true"],
+[data-theme="light"] .mode-tab.is-active,
+[data-theme="light"] .orient-switch button[aria-checked="true"],
+[data-theme="light"] .set-opt[aria-checked="true"] { background: var(--wine); color: #f6e9c9; border-color: var(--wine); box-shadow: none; }
+[data-theme="light"] .btn { color: var(--wine); border-color: var(--gold-deep); }
+[data-theme="light"] .btn-primary { color: #2b130c; }
+[data-theme="light"] .btn-danger { color: #a33a2a; border-color: #a33a2a; }
+[data-theme="light"] .ori-up, [data-theme="light"] .hi-tag { border: 1px solid var(--wine); }
+[data-theme="light"] .ori-rv, [data-theme="light"] .hi-tag.hi-noted { color: #ecd08f; }
+[data-theme="light"] .hero-title { text-shadow: none; }
+[data-theme="light"] .hero-emblem { filter: sepia(0.4) saturate(1.6) brightness(0.72) drop-shadow(0 1px 0 rgba(90, 50, 20, 0.35)); }
+[data-theme="light"] .twinkle i { background: #b8893a; box-shadow: 0 0 6px 1px rgba(184, 137, 58, 0.6); }
+[data-theme="light"] .jc:not(.jc-has) .jc-num { color: var(--ink); text-shadow: none; }
+[data-theme="light"] .offline-dot { background: #a8988a; }
+[data-theme="light"] .offline-dot.ok { background: #4f8a3c; box-shadow: 0 0 6px rgba(79, 138, 60, 0.6); }
+[data-theme="light"] .tile-card.is-empty::after { color: rgba(156, 118, 51, 0.7); }
+[data-theme="light"] textarea, [data-theme="light"] input[type="text"], [data-theme="light"] .search-field input { background: #fffaf0; }
+[data-theme="light"] .spread-btn, [data-theme="light"] .reading-block { box-shadow: inset 0 0 0 3px var(--parch), inset 0 0 0 4px rgba(156, 118, 51, 0.5), 0 4px 14px rgba(90, 50, 20, 0.18); }
+[data-theme="light"] .example-q { border-color: rgba(156, 118, 51, 0.8); }

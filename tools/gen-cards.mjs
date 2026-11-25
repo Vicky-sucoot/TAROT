@@ -311,18 +311,40 @@ function backFigureLarge(x, y, s, robe) {
 
 // ───────────── 牌背 ─────────────
 function back() {
-  let s = `<rect x="18" y="18" width="264" height="464" fill="${A.C.WINE}"/><rect x="18" y="18" width="264" height="464" fill="url(#hx)" opacity="0.6"/>`;
-  for (let i = 0; i < 36; i++) {
-    const a = (i / 36) * Math.PI * 2;
-    s += L(150 + Math.cos(a) * 70, 250 + Math.sin(a) * 70, 150 + Math.cos(a) * (i % 2 ? 110 : 140), 250 + Math.sin(a) * (i % 2 ? 110 : 140), i % 2 ? 0.8 : 1.4, GOLDL);
+  const { gem, fleur, curl } = A;
+  let s = `<rect x="0" y="0" width="300" height="500" rx="14" fill="${WINED}"/><rect x="0" y="0" width="300" height="500" rx="14" fill="url(#damask)"/>`;
+  s += `<rect x="3.5" y="3.5" width="293" height="493" rx="11.5" fill="none" stroke="url(#gv)" stroke-width="3"/>`;
+  s += `<rect x="9" y="9" width="282" height="482" rx="8" fill="none" stroke="${GOLDL}" stroke-width="2" stroke-linecap="round" stroke-dasharray="0.1 4.2"/>`;
+  s += `<rect x="20" y="20" width="260" height="460" rx="6" fill="${WINE}" stroke="url(#gv)" stroke-width="3"/><rect x="20" y="20" width="260" height="460" rx="6" fill="url(#damask)"/>`;
+  s += `<rect x="27" y="27" width="246" height="446" rx="4" fill="none" stroke="${GOLDL}" stroke-width="0.8"/>`;
+  // 中央光芒
+  let rays = '';
+  for (let i = 0; i < 48; i++) {
+    const a = (i / 48) * Math.PI * 2, r2 = i % 2 ? 112 : 150;
+    rays += `M${(150 + Math.cos(a) * 84).toFixed(1)},${(250 + Math.sin(a) * 84).toFixed(1)} L${(150 + Math.cos(a) * r2).toFixed(1)},${(250 + Math.sin(a) * r2).toFixed(1)} `;
   }
-  s += Ci(150, 250, 66, A.C.WINED, { hatch: null, sw: 2, stroke: GOLD }) + Ci(150, 250, 58, 'none', { hatch: null, sw: 0.7, stroke: GOLDL });
-  s += moon(150, 250, 34, { fill: GOLDL }) + star(168, 236, 9, { n: 8, fill: GOLDL });
-  // 180 度對稱的星點
-  const pts = [[60, 70], [240, 70], [90, 110], [210, 110], [150, 60], [50, 250], [250, 250]];
-  for (const [x, y] of pts) { s += star(x, y, 5, { n: 4, fill: GOLDL, inner: 0.3, sw: 0.5 }) + star(300 - x, 500 - y, 5, { n: 4, fill: GOLDL, inner: 0.3, sw: 0.5 }); }
-  s += star(150, 440, 9, { n: 8, fill: GOLDL }) + `<rect x="40" y="40" width="220" height="420" rx="10" fill="none" stroke="${GOLD}" stroke-width="1.2"/>`;
-  return svgDoc(frame(s));
+  s += `<clipPath id="backclip"><rect x="28" y="28" width="244" height="444" rx="4"/></clipPath><path d="${rays}" stroke="url(#gv)" stroke-width="1.3" clip-path="url(#backclip)"/>`;
+  // 花瓣環
+  for (let i = 0; i < 12; i++) s += g(`translate(150 250) rotate(${i * 30})`, El(0, -84, 9, 18, WINED, { hatch: null, sw: 1.4, stroke: GOLDL }) + Ci(0, -88, 2.2, GOLDL, { hatch: null, sw: 0.4 }));
+  s += `<circle cx="150" cy="250" r="72" fill="${WINED}" stroke="url(#gv)" stroke-width="3.5"/><circle cx="150" cy="250" r="65" fill="none" stroke="${GOLDL}" stroke-width="2" stroke-linecap="round" stroke-dasharray="0.1 5.1"/>`;
+  s += star(150, 250, 60, { n: 8, fill: '#5a1424', inner: 0.62, sw: 0.8 });
+  s += `<circle cx="150" cy="250" r="40" fill="${WINED}" stroke="url(#gv)" stroke-width="2"/>`;
+  s += moon(150, 250, 28, { fill: 'url(#gv)' }) + star(163, 239, 7, { n: 8, fill: GOLDL });
+  // 上下徽章（180 度對稱）
+  for (const [y, r] of [[78, 0], [422, 180]]) {
+    s += g(`translate(150 ${y}) rotate(${r})`,
+      line('M-90,0 H-22 M22,0 H90', 1.2, 'url(#gh)') + g('translate(-22 2) scale(0.6)', curl(true)) + g('translate(22 2) scale(0.6)', curl()) +
+      `<circle cx="0" cy="0" r="15" fill="${WINED}" stroke="url(#gv)" stroke-width="2.4"/>` + star(0, 0, 11, { n: 8, fill: 'url(#gv)', inner: 0.4, sw: 0.5 }) + gem(0, 0, 3.4) +
+      line('M0,15 V44', 1.4, 'url(#gv)') + P('M0,44 l5,8 l-5,8 l-5,-8Z', 'url(#gv)', { hatch: null, sw: 0.5, stroke: '#5a3a14' }));
+  }
+  // 左右寶石
+  for (const x of [44, 256]) s += gem(x, 250, 4, 'gemb') + line(`M${x},214 V236 M${x},264 V286`, 1, 'url(#gv)');
+  // 星點
+  for (const [x, y] of [[60, 140], [240, 140], [70, 190], [230, 190], [96, 120], [204, 120]]) {
+    s += star(x, y, 4.5, { n: 4, fill: GOLDL, inner: 0.3, sw: 0.4 }) + star(300 - x, 500 - y, 4.5, { n: 4, fill: GOLDL, inner: 0.3, sw: 0.4 });
+  }
+  s += fleur(34, 34, 45) + fleur(266, 34, 135) + fleur(34, 466, -45) + fleur(266, 466, -135);
+  return svgDoc(s);
 }
 
 const SPARSE = ['w02', 'w03', 'w04', 'w05', 'w06', 'w09', 'w10', 'w11', 'w12', 'w13', 'w14', 's11', 's12', 's13', 's14', 'c11', 'c12', 'c13', 'p02', 'p04', 'p07', 'p08', 'p09', 'p11', 'p12', 'p14', 's08', 'c06', 'c04'];
@@ -341,7 +363,7 @@ for (const [id, fn] of Object.entries(MAJOR)) {
   count++;
 }
 for (const [id, fn] of Object.entries(MINOR)) {
-  writeFileSync(join(out, id + '.svg'), svgDoc(frame(SPARSE.includes(id) ? injectSky(fn(), skyDeco(id)) : fn())));
+  writeFileSync(join(out, id + '.svg'), svgDoc(frame(SPARSE.includes(id) ? injectSky(fn(), skyDeco(id)) : fn(), { suit: { w: 'wands', c: 'cups', s: 'swords', p: 'pentacles' }[id[0]], court: parseInt(id.slice(1), 10) >= 11 })));
   count++;
 }
 writeFileSync(join(out, 'back.svg'), back());

@@ -1,6 +1,6 @@
 /* 自動產生，請勿手動修改：node tools/build-manifest.mjs */
 self.PRECACHE = {
-  "version": "de86315c6338",
+  "version": "0036e3394444",
   "files": [
     "./",
     "index.html",
@@ -9,10 +9,12 @@ self.PRECACHE = {
     "js/app.js",
     "js/backup.js",
     "js/cards-data.js",
+    "js/combos.js",
     "js/offline.js",
     "js/reading.js",
     "js/resultcard.js",
     "js/store.js",
+    "js/topic-meanings.js",
     "cards/back.svg",
     "cards/c01.svg",
     "cards/c02.svg",
@@ -176,6 +178,9 @@ self.PRECACHE = {
     "icons/icon-192.png",
     "icons/icon-512.png",
     "icons/icon-maskable-512.png",
+    "fonts/yuexia-serif-400.woff2",
+    "fonts/yuexia-serif-700.woff2",
+    "fonts/OFL.txt",
     "docs/credits.html",
     "precache-manifest.js"
   ]

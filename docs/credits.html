@@ -6,11 +6,13 @@
 <title>牌義參考與授權</title>
 <meta name="theme-color" content="#3a0c17">
 <style>
+  @font-face { font-family: "Yuexia Serif"; src: url("../fonts/yuexia-serif-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "Yuexia Serif"; src: url("../fonts/yuexia-serif-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
   :root { --wine:#5a1424; --deep:#2e0a14; --gold:#c9a45c; --gold2:#e2c98f; --parch:#f3e7cc; --ink:#2b1a14; }
   * { box-sizing: border-box; }
   body { margin:0; background: var(--deep); color: var(--parch); font: 16px/1.75 -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
   main { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; }
-  h1, h2 { font-family: "Songti TC", "Noto Serif TC", "PingFang TC", serif; color: var(--gold2); letter-spacing: .06em; }
+  h1, h2 { font-family: "Yuexia Serif", "Songti TC", "Noto Serif TC", "PingFang TC", serif; color: var(--gold2); letter-spacing: .06em; }
   h1 { font-size: 26px; margin: 8px 0 4px; }
   h2 { font-size: 20px; margin: 28px 0 8px; border-bottom: 1px solid rgba(201,164,92,.4); padding-bottom: 4px; }
   a { color: var(--gold2); }
@@ -22,6 +24,7 @@
   .card img { float: left; width: 54px; margin: 2px 12px 4px 0; border-radius: 4px; }
   .card p { margin: 4px 0; }
   .card b { color: var(--wine); }
+  .card .topics { font-size: 14px; color: #5b4336; }
   .clear { clear: both; }
   .back { display: inline-block; margin-bottom: 8px; }
 </style>
@@ -46,7 +49,8 @@
     <tr><td>78 張牌圖與牌背</td><td>本專案原創，以程式繪製（tools/gen-cards.mjs）</td><td>原創作品，未使用任何既有牌卡圖像；可公開展示與離線使用</td></tr>
     <tr><td>網站圖示、主畫面圖示、月亮紋章</td><td>本專案原創 SVG</td><td>原創作品</td></tr>
     <tr><td>牌義與解讀文字</td><td>本專案原創撰寫</td><td>原創作品（參考資料如上）</td></tr>
-    <tr><td>字體</td><td>使用裝置內建系統字體（iPhone 為蘋方 PingFang TC 等）</td><td>未下載、未嵌入、未散布任何第三方字體檔案，因此無需額外字體授權；離線時同樣使用系統字體</td></tr>
+    <tr><td>標題與結果卡字體</td><td>思源宋體（Noto Serif TC，© Adobe，由 Google Fonts 發布，取自 npm 套件 @fontsource/noto-serif-tc 5.1.1），只保留本站用到的字元</td><td><a href="../fonts/OFL.txt">SIL Open Font License 1.1</a>（<a href="https://openfontlicense.org/" rel="noopener">openfontlicense.org</a>），允許免費使用、嵌入網站、公開展示與隨網站離線快取；子集化後的字型檔沿用同一授權</td></tr>
+    <tr><td>內文字體</td><td>裝置內建系統字體（iPhone 為蘋方 PingFang TC 等）</td><td>由作業系統提供，網站未散布</td></tr>
     <tr><td>圖示（返回、月亮等）</td><td>本專案以 SVG 路徑與 Unicode 字元自行繪製</td><td>未使用第三方圖示庫</td></tr>
     <tr><td>程式庫</td><td>無</td><td>網站執行時不載入任何第三方程式庫或 CDN；開發測試時使用的 Playwright（Apache-2.0）不隨網站發布</td></tr>
   </table>
@@ -54,10 +58,16 @@
   <h2>隱私</h2>
   <p>免登入。你的提問、感情情境、解讀與結果卡配色只保存在目前裝置的網站儲存空間（localStorage），不會上傳到任何伺服器或第三方服務，也不會寫入分享網址。分享網站時只會分享公開首頁網址；分享用結果卡不包含提問與感情情境。</p>
 
-  <h2>全部 78 張牌・156 筆牌義</h2>
+  <h2>牌組合解讀</h2>
+  <p>同一次占卜中同時出現以下組合時，解讀會加上對應的說明（最多三段）。</p>
+  <div id="combos"></div>
+
+  <h2>全部 78 張牌・156 筆牌義・468 句主題牌義</h2>
   <div id="meanings"><p>載入中…</p></div>
 </main>
 <script src="../js/cards-data.js"></script>
+<script src="../js/topic-meanings.js"></script>
+<script src="../js/combos.js"></script>
 <script>
   (function () {
     var T = window.TAROT, S = T.SUITS;
@@ -67,9 +77,20 @@
       if (c.suit !== last) { last = c.suit; html += '<h2>' + S[c.suit].name + (S[c.suit].element ? '（' + S[c.suit].element + '・' + S[c.suit].theme + '）' : '') + '</h2>'; }
       html += '<div class="card"><img src="../' + c.img + '" alt="' + esc(c.name) + '"><h3>' + esc(c.name) + '　<small>' + esc(c.en) + '</small></h3>' +
         '<p><b>正位</b>｜' + esc(c.up.k.join('、')) + '<br>' + esc(c.up.m) + '</p>' +
-        '<p><b>逆位</b>｜' + esc(c.rv.k.join('、')) + '<br>' + esc(c.rv.m) + '</p><div class="clear"></div></div>';
+        '<p><b>逆位</b>｜' + esc(c.rv.k.join('、')) + '<br>' + esc(c.rv.m) + '</p>' + topics(c.id) + '<div class="clear"></div></div>';
     });
     document.getElementById('meanings').innerHTML = html;
+    function topics(id) {
+      var t = window.TOPIC_MEANINGS && window.TOPIC_MEANINGS[id];
+      if (!t) return '';
+      return '<p class="topics"><b>感情</b> 正：' + esc(t.love[0]) + '　逆：' + esc(t.love[1]) + '<br><b>工作</b> 正：' + esc(t.work[0]) + '　逆：' + esc(t.work[1]) +
+        '<br><b>財運</b> 正：' + esc(t.money[0]) + '　逆：' + esc(t.money[1]) + '</p>';
+    }
+    var C = window.COMBOS;
+    if (C) {
+      document.getElementById('combos').innerHTML = '<ul>' + C.PAIRS.map(function (p) { return '<li><b>' + esc(p[2]) + '</b>：' + esc(p[3]) + '</li>'; }).join('') +
+        C.RULES.map(function (r) { return '<li><b>' + esc(r.title) + '</b>：' + esc(r.text) + '</li>'; }).join('') + '</ul>';
+    }
   })();
 </script>
 </body>

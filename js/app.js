@@ -384,6 +384,11 @@
   function readingHTML(rec) {
     var r = rec.reading;
     var h = '<div class="reading-block"><h3>整體摘要</h3><p>' + esc(r.summary) + '</p><p class="reading-focus">' + esc(r.focus) + '</p></div>';
+    if (r.combos && r.combos.length) {
+      h += '<div class="reading-block combo-block"><h3>牌組合</h3>' + r.combos.map(function (c) {
+        return '<p class="combo"><span class="combo-title">' + esc(c.title) + '</span>' + esc(c.text) + '</p>';
+      }).join('') + '</div>';
+    }
     h += '<div class="reading-block"><h3>逐張解讀</h3>';
     r.cards.forEach(function (c) {
       h += '<details class="reading-detail"><summary><span class="rd-thumb">' + artHTML(c.id, c.rev) + '</span><span><span class="rd-pos">' + esc(c.position) + '</span>' +
@@ -748,13 +753,15 @@
     var c = T.BY_ID[id], S = T.SUITS[c.suit];
     var idx = T.CARDS.indexOf(c);
     var prev = T.CARDS[(idx + 77) % 78], next = T.CARDS[(idx + 1) % 78];
-    var block = function (label, f) {
-      return '<div class="reading-block"><h3>' + label + '</h3><p>' + f.k.map(function (k) { return '<span class="kw">' + esc(k) + '</span>'; }).join('') + '</p><p>' + esc(f.m) + '</p></div>';
+    var tm = window.TOPIC_MEANINGS && window.TOPIC_MEANINGS[c.id];
+    var block = function (label, f, ri) {
+      return '<div class="reading-block"><h3>' + label + '</h3><p>' + f.k.map(function (k) { return '<span class="kw">' + esc(k) + '</span>'; }).join('') + '</p><p>' + esc(f.m) + '</p>' +
+        (tm ? '<dl class="topic-list"><dt>感情</dt><dd>' + esc(tm.love[ri]) + '</dd><dt>工作</dt><dd>' + esc(tm.work[ri]) + '</dd><dt>財運</dt><dd>' + esc(tm.money[ri]) + '</dd></dl>' : '') + '</div>';
     };
     $('card-body').innerHTML = '<div class="card-detail-head"><h2 class="view-heading">' + esc(c.name) + '</h2><p class="en">' + esc(c.en) + '・' + S.name + (S.element ? '（' + S.element + '・' + S.theme + '）' : '') + '</p></div>' +
       '<div class="card-detail-art"><img id="card-detail-img" src="' + c.img + '" alt="' + esc(c.name) + '"></div>' +
       '<div class="orient-switch" role="radiogroup" aria-label="切換正逆位"><button type="button" role="radio" aria-checked="true" data-orient="up">正位</button><button type="button" role="radio" aria-checked="false" data-orient="rv">逆位</button></div>' +
-      block('正位', c.up) + block('逆位', c.rv) +
+      block('正位', c.up, 0) + block('逆位', c.rv, 1) +
       '<div class="card-nav"><button class="btn btn-ghost" type="button" id="card-prev">‹ ' + esc(prev.name) + '</button><button class="btn btn-ghost" type="button" id="card-next">' + esc(next.name) + ' ›</button></div>';
     Array.prototype.forEach.call(document.querySelectorAll('[data-orient]'), function (b) {
       b.onclick = function () {

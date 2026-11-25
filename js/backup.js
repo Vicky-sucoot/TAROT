@@ -31,8 +31,10 @@
         };
       });
       if (cards.every(Boolean)) {
+        var combos = Array.isArray(reading.combos) ? reading.combos.filter(function (x) { return x && typeof x.title === 'string' && typeof x.text === 'string'; })
+          .slice(0, 3).map(function (x) { return { title: x.title.slice(0, 40), text: x.text.slice(0, 400) }; }) : [];
         return {
-          summary: str(reading.summary, 2000), focus: str(reading.focus, 400), cards: cards,
+          summary: str(reading.summary, 2000), focus: str(reading.focus, 400), cards: cards, combos: combos,
           question: str(reading.question, 400), publicLine: str(reading.publicLine, 200)
         };
       }

@@ -13,6 +13,7 @@ const files = [
   ...list('cards', '.svg'),
   ...list('cards/rv', '.svg'),
   'icons/icon.svg', 'icons/emblem.svg', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png',
+  'fonts/yuexia-serif-400.woff2', 'fonts/yuexia-serif-700.woff2', 'fonts/OFL.txt',
   'docs/credits.html', 'precache-manifest.js'
 ];
 const h = createHash('sha256');

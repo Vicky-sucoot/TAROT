@@ -189,6 +189,13 @@
     return option || 'general';
   }
 
+  // 這次解讀對應的專屬牌義主題（感情／工作／財運），綜合主題則不加
+  function topicOf(spreadId, option) {
+    if (spreadId === 'relation') return 'love';
+    return option === 'love' || option === 'work' || option === 'money' ? option : null;
+  }
+  var TOPIC_PREFIX = { love: '放在感情上：', work: '放在工作上：', money: '放在財運上：' };
+
   function categoryOf(spreadId, option) {
     return spreadId === 'relation' ? 'love' : (option || 'general');
   }
@@ -319,6 +326,9 @@
       }
       if (step) used[step] = true;
       var body = [cardIntro(input.spread, i, x.card, x.rev), f.m];
+      var topic = topicOf(input.spread, input.option);
+      var tm = topic && root.TOPIC_MEANINGS && root.TOPIC_MEANINGS[x.card.id];
+      if (tm) body.push(TOPIC_PREFIX[topic] + tm[topic][x.rev ? 1 : 0]);
       var n = nuance(input.spread, i, x.card, x.rev);
       if (n) body.push(n);
       return {
@@ -343,6 +353,7 @@
       summary: summary.join(''),
       focus: FOCUS[lens],
       cards: details,
+      combos: root.COMBOS ? root.COMBOS.find(input.cards) : [],
       question: question,
       publicLine: publicLine
     };
@@ -357,6 +368,7 @@
     CONTEXT_LABEL: CONTEXT_LABEL,
     STEPS: STEPS,
     interpret: interpret,
+    topicOf: topicOf,
     categoryOf: categoryOf
   };
 })(typeof self !== 'undefined' ? self : this);

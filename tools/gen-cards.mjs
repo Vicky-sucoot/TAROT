@@ -193,7 +193,7 @@ const MINOR = {
   c07: () => sky() + cloud(150, 330, 260, WHITE) + [[60, 150], [110, 150], [160, 150], [210, 150], [70, 270], [140, 270], [210, 270]].map(([x, y], i) =>
     place('cups', x + 16, y + 50, 1.3) + [Ci(x + 16, y + 6, 6, SKIN), I.wand(0) && g(`translate(${x + 16} ${y + 6})`, snake(0, -10, 0.15)), g(`translate(${x + 16} ${y + 8})`, castle(0, 6, 0.3)), g(`translate(${x + 16} ${y + 10})`, I.pentacle(6)), g(`translate(${x + 16} ${y + 10})`, crownShape(0, 0, 14)), wreath(x + 16, y + 6, 6, 6), g(`translate(${x + 16} ${y + 6})`, star(0, 0, 6))][i]).join('') +
     backFigure(150, 482, 1.6, DARK),
-  c08: () => sky({ night: true }) + sun(150, 90, 26, { face: false }) + moon(150, 90, 22, { fill: WHITE }) + mountains(340, [[100, 80, 60], [220, 110, 70]], STONE) + ground(350, PARCH2) + `<path d="M18,420 q140,-20 264,10" stroke="${BLUEL}" stroke-width="20" fill="none"/>` +
+  c08: () => sky({ night: true }) + c08Moon(150, 92) + mountains(340, [[100, 80, 60], [220, 110, 70]], STONE) + ground(350, PARCH2) + `<path d="M18,420 q140,-20 264,10" stroke="${BLUEL}" stroke-width="20" fill="none"/>` +
     figure({ x: 200, y: 380, s: 0.9, robe: WINE, head: 'hood', armL: 10, armR: 20, holdR: { item: I.staff(90) } }) +
     [[40, 470], [75, 470], [110, 470], [145, 470], [180, 470], [57, 440], [92, 440], [127, 440]].map(([x, y]) => place('cups', x, y, 1.2)).join(''),
   c09: () => sky() + `<rect x="30" y="230" width="240" height="40" fill="${BLUE}"/><rect x="30" y="230" width="240" height="40" fill="url(#hx)"/>` +
@@ -308,6 +308,20 @@ function injectSky(body, deco) {
 
 function backFigureLarge(x, y, s, robe) {
   return g(tr(x, y, s), P('M-20,0 Q-22,-50 -14,-70 Q0,-78 14,-70 Q22,-50 20,0Z', robe) + Ci(0, -80, 10, BROWN, { hatch: 'h' }));
+}
+
+// 聖杯八：滿月中帶著新月的臉，月光照著離去的人
+function c08Moon(x, y) {
+  let rays = '';
+  for (let i = 0; i < 24; i++) {
+    const a = (i / 24) * Math.PI * 2;
+    rays += `M${(x + Math.cos(a) * 30).toFixed(1)},${(y + Math.sin(a) * 30).toFixed(1)} L${(x + Math.cos(a) * (i % 2 ? 38 : 44)).toFixed(1)},${(y + Math.sin(a) * (i % 2 ? 38 : 44)).toFixed(1)} `;
+  }
+  return line(rays, 1, GOLDL, ' opacity="0.8"') +
+    Ci(x, y, 26, '#efe6cf', { hatch: 'hl' }) +
+    moon(x + 2, y, 24, { fill: GOLDL }) +
+    line(`M${x - 12},${y - 4} q3,-2 6,0 M${x - 10},${y + 3} q2,2 5,0 M${x - 13},${y + 11} q4,2 8,0`, 0.9, INK, ' opacity="0.7"') +
+    `<circle cx="${x - 9}" cy="${y - 3}" r="1" fill="${INK}"/>`;
 }
 
 // ───────────── 牌背 ─────────────

@@ -90,7 +90,7 @@
   var VIEWS = ['home', 'setup', 'draw', 'history', 'record', 'gallery', 'card', 'stats', 'settings', 'journal'];
   var draw = null; // 目前這一局
   var setupSpread = 'guide';
-  var setupOption = { guide: 'general', relation: 'none', choice: 'general', flow: 'general' };
+  var setupOption = { guide: 'general', relation: 'none', choice: 'general', flow: 'general', single: 'general' };
   var galleryFilter = 'all';
   var historyFilter = 'all';
 
@@ -109,7 +109,7 @@
   function route() {
     var h = location.hash.replace(/^#\/?/, '');
     var m;
-    if ((m = /^setup-(guide|relation|choice|flow)$/.exec(h))) return showSetup(m[1]);
+    if ((m = /^setup-(guide|relation|choice|flow|single)$/.exec(h))) return showSetup(m[1]);
     if (h === 'draw' && draw) return show('draw', draw.spreadDef.name);
     if (h === 'history') return showHistory();
     if ((m = /^record-([A-Za-z0-9]+)$/.exec(h))) return showRecord(m[1]);
@@ -193,7 +193,8 @@
       guide: '例如：最近的工作該怎麼調整步調？',
       relation: '例如：我該怎麼和對方溝通我的想法？',
       choice: '例如：我該留下，還是換一份工作？',
-      flow: '例如：這段時間的生活會往哪裡走？'
+      flow: '例如：這段時間的生活會往哪裡走？',
+      single: '例如：今天適合主動聯絡他嗎？'
     }[spreadId];
     $('setup-choices').hidden = spreadId !== 'choice';
     var gd = sp.guide;
@@ -249,7 +250,7 @@
     };
     $('draw-heading').textContent = sp.name;
     var meta = spreadId !== 'relation' ? '主題：' + RD.TOPIC_LABEL[option] : (option !== 'none' ? '情境：' + RD.CONTEXT_LABEL[option] : '情境：略過');
-    $('draw-meta').textContent = meta + '・' + sp.positions.join('／');
+    $('draw-meta').textContent = meta + '・' + sp.positions.join('／') + (ST.getReversals() ? '' : '・只用正位');
     var priv = privateText(question, draw.choices);
     $('draw-question').hidden = !priv;
     $('draw-question').textContent = priv;
@@ -332,7 +333,7 @@
   function addPick(id) {
     if (draw.picks.length >= draw.n) return false;
     if (draw.picks.some(function (p) { return p.id === id; })) return false; // 同一局不重複
-    draw.picks.push({ id: id, rev: rand(2) === 1 });
+    draw.picks.push({ id: id, rev: ST.getReversals() && rand(2) === 1 });
     var b = document.querySelector('.deck-card[data-card="' + id + '"]');
     if (b) b.hidden = true;
     fillSlot(draw.picks.length - 1);
@@ -393,7 +394,7 @@
     });
     if (draw.flipped < draw.n) markNext();
     else {
-      $('draw-status').textContent = numLabel(draw.n) + '張牌都翻開了';
+      $('draw-status').textContent = draw.n === 1 ? '牌已經翻開了' : numLabel(draw.n) + '張牌都翻開了';
       wait(isReduced() ? 100 : 750).then(showLiveReading);
     }
   }
@@ -424,8 +425,15 @@
       spreadName: sp.name,
       publicLine: rec.reading.publicLine,
       cards: rec.cards.map(function (c, i) { return { id: c.id, rev: c.rev, name: T.BY_ID[c.id].name, position: sp.positions[i] }; }),
-      ts: rec.ts
+      ts: rec.ts,
+      site: siteLabel()
     };
+  }
+  // 結果卡上的網站網址（取自分享用的正式網址，去掉 https:// 與結尾斜線）
+  function siteLabel() {
+    var m = document.querySelector('meta[property="og:url"]');
+    var u = m ? m.getAttribute('content') : location.origin + location.pathname;
+    return u.replace(/^https?:\/\//, '').replace(/\/$/, '');
   }
 
   function showLiveReading() {
@@ -560,7 +568,7 @@
 
   // ───── 備份與還原 ─────
   function backupFile() {
-    var data = window.BACKUP.build(ST.all(), { palette: ST.getPalette(), format: ST.getCardFormat(), showDate: ST.getShowDate(), theme: ST.getTheme() }, ST.getDailyLog());
+    var data = window.BACKUP.build(ST.all(), { palette: ST.getPalette(), format: ST.getCardFormat(), showDate: ST.getShowDate(), theme: ST.getTheme(), reversals: ST.getReversals() }, ST.getDailyLog());
     var name = 'yuexia-backup-' + fileStamp(Date.now()) + '.json';
     return { file: new File([JSON.stringify(data)], name, { type: 'application/json' }), count: data.records.length, days: Object.keys(data.dailyLog).length };
   }
@@ -605,6 +613,7 @@
         if (res.settings.format) ST.setCardFormat(res.settings.format);
         if (res.settings.showDate !== null) ST.setShowDate(res.settings.showDate);
         if (res.settings.theme) { ST.setTheme(res.settings.theme); applyTheme(); }
+        if (res.settings.reversals !== null) ST.setReversals(res.settings.reversals);
         var addedDays = ST.importDailyLog(res.dailyLog);
         var msg = '已匯入 ' + r.added + ' 筆';
         if (addedDays) msg += '、' + addedDays + ' 天今日指引';
@@ -755,7 +764,7 @@
   function drawDaily() {
     if (ST.getDaily(dateKey())) return;
     var c = T.CARDS[rand(T.CARDS.length)];
-    ST.setDaily({ date: dateKey(), id: c.id, rev: rand(2) === 1 });
+    ST.setDaily({ date: dateKey(), id: c.id, rev: ST.getReversals() && rand(2) === 1 });
     renderDaily(true);
   }
   $('daily-card').onclick = drawDaily;
@@ -940,6 +949,29 @@
     return '<p class="reading-focus">重複出現的牌：' + rep.map(function (k) { return esc(T.BY_ID[k].name) + ' ' + count[k] + ' 次'; }).join('、') + '</p>';
   }
 
+  // ───── 第一次使用的導覽 ─────
+  var obPage = 0;
+  function renderOnboarding() {
+    Array.prototype.forEach.call(document.querySelectorAll('.ob-page'), function (p) { p.hidden = +p.getAttribute('data-page') !== obPage; });
+    Array.prototype.forEach.call(document.querySelectorAll('.ob-dots span'), function (d, i) { d.classList.toggle('is-on', i === obPage); });
+    $('ob-next').textContent = obPage === 2 ? '開始使用' : '下一步';
+    var h = document.querySelector('.ob-page[data-page="' + obPage + '"] h3');
+    $('onboard').querySelector('.onboard-card').setAttribute('aria-labelledby', h.id || 'onboard-title');
+  }
+  function showOnboarding() {
+    obPage = 0;
+    renderOnboarding();
+    $('onboard').hidden = false;
+    $('ob-next').focus();
+  }
+  function closeOnboarding() {
+    ST.setOnboarded();
+    $('onboard').hidden = true;
+  }
+  $('ob-next').onclick = function () { if (obPage < 2) { obPage++; renderOnboarding(); } else closeOnboarding(); };
+  $('ob-skip').onclick = closeOnboarding;
+  $('btn-onboard').onclick = showOnboarding;
+
   // ───── 介面主題 ─────
   var lightMQ = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
   function applyTheme() {
@@ -957,7 +989,12 @@
     b.onclick = function () { ST.setTheme(b.getAttribute('data-set-theme')); applyTheme(); syncSettings(); };
   });
 
+  Array.prototype.forEach.call(document.querySelectorAll('[data-set-rev]'), function (b) {
+    b.onclick = function () { ST.setReversals(b.getAttribute('data-set-rev') === '1'); syncSettings(); };
+  });
   function syncSettings() {
+    var rv = ST.getReversals() ? '1' : '0';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-set-rev]'), function (b) { b.setAttribute('aria-checked', b.getAttribute('data-set-rev') === rv); });
     var th = ST.getTheme();
     Array.prototype.forEach.call(document.querySelectorAll('[data-set-theme]'), function (b) { b.setAttribute('aria-checked', b.getAttribute('data-set-theme') === th); });
     var pal = ST.getPalette(), fmt = ST.getCardFormat();
@@ -994,8 +1031,9 @@
   applyTheme();
   renderDaily(false);
   route();
+  if (!ST.getOnboarded()) showOnboarding();
   OFF.start();
 
   // 供自動化測試使用的唯讀介面
-  window.__YUEXIA__ = { get draw() { return draw; }, makeBlob: makeBlob, cardData: cardData, dateKey: dateKey };
+  window.__YUEXIA__ = { get draw() { return draw; }, makeBlob: makeBlob, cardData: cardData, dateKey: dateKey, showOnboarding: showOnboarding };
 })();

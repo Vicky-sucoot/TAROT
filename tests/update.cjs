@@ -1,6 +1,7 @@
 // 驗證「有新版本」提示：更新後保留紀錄與配色
 // 使用：伺服器執行中時 node tests/update.cjs（會暫時修改 precache-manifest.js 的版本號，結束後還原）
 const { chromium, devices } = require('playwright');
+const { skipOnboarding } = require('./helpers.cjs');
 const fs = require('fs');
 const path = require('path');
 const BASE = process.env.BASE || 'http://localhost:8123/';
@@ -11,7 +12,7 @@ const origSw = fs.readFileSync(sw, 'utf8');
 (async () => {
   let failed = 0;
   const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) failed++; };
-  const b = await chromium.launch();
+  const b = skipOnboarding(await chromium.launch());
   const ctx = await b.newContext({ ...devices['iPhone 13'] });
   const p = await ctx.newPage();
   try {

@@ -116,7 +116,12 @@
     }
     var L = { W: 1080, H: 1920, titleY: 320, titleSize: 104, tagY: 380, ribbonY: 472, spreadSize: 50, moonY: 165, moonR: 44,
       stars: [[120, 160], [960, 210], [180, 470], [900, 520], [80, 1180], [1000, 1150], [150, 1620], [940, 1700], [540, 1560]] };
-    if (n <= 3) {
+    if (n === 1) {
+      // 單張：放大牌面，指引往下移
+      L.cw = 400; L.gap = 0; L.rows = [[0, 1, 520]];
+      L.posSize = 36; L.nameSize = 54; L.pill = [124, 54, 34];
+      L.dividerY = 1470; L.guideLabelY = 1545; L.guideY = 1630; L.guideSize = 50; L.guideMax = 860; L.guideLines = 3;
+    } else if (n <= 3) {
       L.cw = 300; L.gap = 30; L.rows = [[0, n, 540]];
       L.posSize = 32; L.nameSize = 46; L.pill = [112, 50, 32];
       L.dividerY = 1330; L.guideLabelY = 1410; L.guideY = 1495; L.guideSize = 50; L.guideMax = 860; L.guideLines = 4;
@@ -262,7 +267,8 @@
       // 頁尾
       ctx.fillStyle = pal.muted;
       ctx.font = '400 28px ' + FONT_SANS;
-      var foot = '月下占卜・' + data.spreadName + (opts.showDate && data.ts ? '・' + fmtDate(data.ts) : '');
+      var foot = ['月下占卜', data.spreadName].concat(opts.showDate && data.ts ? [fmtDate(data.ts)] : []).concat(data.site ? [data.site] : []).join('・');
+      fitFont(ctx, foot, '400', 28, FONT_SANS, W - 200);
       ctx.fillText(foot, 540, Lo.footY);
       return cv;
     });

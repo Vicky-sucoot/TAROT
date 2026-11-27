@@ -1,6 +1,7 @@
 // 主題牌義、牌組合、字型與牌圖細節驗收
 // 使用：先啟動靜態伺服器（python3 -m http.server 8123），再執行 node tests/content.cjs
 const { chromium, devices } = require('playwright');
+const { skipOnboarding } = require('./helpers.cjs');
 const fs = require('fs');
 const path = require('path');
 
@@ -11,7 +12,7 @@ let pass = 0, fail = 0;
 function ok(cond, msg) { if (cond) { pass++; console.log('  ✓ ' + msg); } else { fail++; console.log('  ✗ ' + msg); } }
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = skipOnboarding(await chromium.launch());
   const ctx = await browser.newContext({ ...devices['iPhone 13'] });
   const page = await ctx.newPage();
   const errors = [];

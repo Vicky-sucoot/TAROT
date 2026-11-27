@@ -1,6 +1,7 @@
 // 月下占卜端對端驗收測試（Chromium + Playwright，模擬 iPhone 尺寸）
 // 使用：先在專案根目錄啟動靜態伺服器（python3 -m http.server 8123），再執行 node tests/e2e.cjs
 const { chromium, devices } = require('playwright');
+const { skipOnboarding } = require('./helpers.cjs');
 const fs = require('fs');
 const path = require('path');
 
@@ -34,7 +35,7 @@ async function quick(page) {
 }
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = skipOnboarding(await chromium.launch());
   const ctx = await browser.newContext({ ...devices['iPhone 13'], acceptDownloads: true });
   const page = await ctx.newPage();
   const errors = [];

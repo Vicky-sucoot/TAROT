@@ -1,6 +1,7 @@
 // 結果卡指引句、今日指引紀錄、氛圍動畫驗收
 // 使用：先啟動靜態伺服器（python3 -m http.server 8123），再執行 node tests/extras.cjs
 const { chromium, devices } = require('playwright');
+const { skipOnboarding } = require('./helpers.cjs');
 const fs = require('fs');
 const path = require('path');
 
@@ -12,7 +13,7 @@ function ok(cond, msg) { if (cond) { pass++; console.log('  ✓ ' + msg); } else
 async function toastText(page) { await page.waitForSelector('#toast:not([hidden])'); return page.textContent('#toast'); }
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = skipOnboarding(await chromium.launch());
   const ctx = await browser.newContext({ ...devices['iPhone 13'], acceptDownloads: true });
   const page = await ctx.newPage();
   const errors = [];

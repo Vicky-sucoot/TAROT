@@ -1,6 +1,7 @@
 // 設定頁、首頁精簡、歷史搜尋、標籤、刪除復原、清除所有資料
 // 使用：先啟動靜態伺服器（python3 -m http.server 8123），再執行 node tests/ui.cjs
 const { chromium, devices } = require('playwright');
+const { skipOnboarding } = require('./helpers.cjs');
 const fs = require('fs');
 const path = require('path');
 
@@ -27,7 +28,7 @@ async function playOnce(page, spread, option, question, choices) {
 }
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = skipOnboarding(await chromium.launch());
   const ctx = await browser.newContext({ ...devices['iPhone 13'] });
   const page = await ctx.newPage();
   const errors = [];

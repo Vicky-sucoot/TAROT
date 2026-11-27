@@ -97,6 +97,10 @@
           <span class="spread-name">時間之流牌陣</span>
           <span class="spread-desc">五張牌：過去的影響／現在／未來的走向／需要留意／行動建議</span>
         </button>
+        <button class="spread-btn" type="button" data-start="single">
+          <span class="spread-name">單張快問</span>
+          <span class="spread-desc">抽一張牌，給眼前的小問題一個提醒</span>
+        </button>
       </div>
 
       <div class="home-actions">
@@ -276,6 +280,15 @@
         <p class="note">備份檔只在你的裝置上產生，不會上傳。檔案裡有你的提問與筆記，請自行妥善保管。</p>
       </section>
 
+      <section class="panel settings-panel" aria-labelledby="set-draw-title">
+        <h3 class="backup-title" id="set-draw-title">抽牌</h3>
+        <div class="set-group set-group-2" role="radiogroup" aria-label="是否使用逆位">
+          <button type="button" class="set-opt" data-set-rev="1" role="radio">使用正逆位</button>
+          <button type="button" class="set-opt" data-set-rev="0" role="radio">只用正位</button>
+        </div>
+        <p class="note">選「只用正位」時，抽到的牌（包括今日指引）都會是正位，解讀也只使用正位牌義。已經儲存的紀錄不受影響。</p>
+      </section>
+
       <section class="panel settings-panel" aria-labelledby="set-theme-title">
         <h3 class="backup-title" id="set-theme-title">介面主題</h3>
         <div class="set-group" role="radiogroup" aria-label="介面主題">
@@ -312,6 +325,7 @@
         <p class="note">月下占卜・在月光下，聽見自己的答案。塔羅解讀僅供自我覺察參考，不構成醫療、法律或投資建議。</p>
         <p class="note"><a href="docs/credits.html">牌義參考與授權說明</a></p>
         <p class="note">版本：<span id="app-version"></span></p>
+        <button class="btn btn-ghost btn-small" type="button" id="btn-onboard">重看使用導覽</button>
       </section>
     </section>
 
@@ -335,6 +349,37 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" type="button" id="confirm-cancel">取消</button>
       <button class="btn btn-primary" type="button" id="confirm-ok">確定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 第一次使用的導覽 -->
+<div class="modal onboard" id="onboard" hidden>
+  <div class="modal-card onboard-card" role="dialog" aria-modal="true" aria-labelledby="onboard-title">
+    <div class="ob-pages">
+      <section class="ob-page" data-page="0">
+        <img class="ob-art" src="icons/emblem.svg" alt="" width="96" height="96">
+        <h3 id="onboard-title">歡迎來到月下占卜</h3>
+        <p>從首頁選一個牌陣開始：三張牌指引、感情關係、二選一、時間之流，或只抽一張的單張快問。每天也可以抽一張「今日指引」。</p>
+        <p class="ob-tip">每個牌陣都有「這個牌陣適合問什麼？」說明與提問範例。</p>
+      </section>
+      <section class="ob-page" data-page="1" hidden>
+        <div class="ob-fan" aria-hidden="true"><img src="cards/back.svg" alt=""><img src="cards/back.svg" alt=""><img src="cards/back.svg" alt=""></div>
+        <h3>洗牌、抽牌、翻牌</h3>
+        <p>洗牌後，左右滑動牌背親手挑選，或按「快速抽牌」一次抽好。牌都放好後，依序點擊翻開，再閱讀整體摘要、逐張解讀，以及一個給自己的提問。</p>
+        <p class="ob-tip">喜歡的結果可以做成結果卡，下載或分享到 LINE。</p>
+      </section>
+      <section class="ob-page" data-page="2" hidden>
+        <div class="ob-lock" aria-hidden="true">☾</div>
+        <h3>紀錄只留在這台手機</h3>
+        <p>按「儲存結果」才會保存紀錄。你的提問、筆記與紀錄都只存在這台裝置，不會上傳，也不需要登入。</p>
+        <p class="ob-tip">換手機或清除瀏覽器資料前，記得到「設定」匯出備份。加入主畫面後，沒有網路也能占卜。</p>
+      </section>
+    </div>
+    <div class="ob-dots" aria-hidden="true"><span class="is-on"></span><span></span><span></span></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" type="button" id="ob-skip">略過</button>
+      <button class="btn btn-primary" type="button" id="ob-next">下一步</button>
     </div>
   </div>
 </div>

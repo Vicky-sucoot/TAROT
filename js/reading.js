@@ -67,10 +67,26 @@
         { id: 'money', label: '財運' },
         { id: 'general', label: '綜合' }
       ]
+    },
+    single: {
+      id: 'single',
+      name: '單張快問',
+      positions: ['給你的指引'],
+      guide: {
+        fit: '適合想快速得到一個提醒的小問題，例如今天要不要主動聯絡、這次面試該抱著什麼心態。問題越具體，提醒越清楚。',
+        how: '只抽一張牌，把它當成這個問題此刻的提醒。正位通常代表可以順著這股力量前進；逆位則提醒你先留意卡住的地方。它不是「是或否」的答案，而是幫你看清自己的狀態。',
+        examples: ['今天適合主動聯絡他嗎？', '明天的面試，我該抱著什麼心態？', '這筆想買的東西，需要再想想嗎？']
+      },
+      options: [
+        { id: 'love', label: '感情' },
+        { id: 'work', label: '工作' },
+        { id: 'money', label: '財運' },
+        { id: 'general', label: '綜合' }
+      ]
     }
   };
-  var ORDER = ['guide', 'relation', 'choice', 'flow'];
-  var NUM = { 3: '三', 5: '五' };
+  var ORDER = ['guide', 'relation', 'choice', 'flow', 'single'];
+  var NUM = { 1: '一', 3: '三', 5: '五' };
 
   var CATEGORIES = [
     { id: 'all', label: '全部' },
@@ -228,13 +244,14 @@
       guide: ['這張牌描述你目前的狀態。', '這是目前可能卡住你的部分。', '這是你可以嘗試的方向。'],
       relation: ['這張牌反映你心裡的感受與期待。', '這是你們之間目前可以觀察到的互動模式。', '這是你下一步可以考慮的方向。'],
       choice: ['這張牌描述選擇 A 之後可能的發展。', '這張牌描述選擇 B 之後可能的發展。', '這張牌反映你在這個選擇裡真正在意的事。'],
+      single: ['這張牌是給這個問題的提醒。'],
       flow: ['這張牌是過去留下的影響。', '這張牌描述你現在的狀態。', '這張牌是照目前方向走下去，未來可能的走向。', '這是需要特別留意的地方。', '這是你可以採取的行動。']
     })[spreadId][idx];
     return lead + label + '的關鍵詞是：' + kw + '。';
   }
 
-  function adviceIndex(spreadId) { return spreadId === 'flow' ? 4 : spreadId === 'choice' ? -1 : 2; }
-  function keyIndex(spreadId) { return spreadId === 'flow' ? 4 : 2; }
+  function adviceIndex(spreadId) { return spreadId === 'flow' ? 4 : spreadId === 'choice' ? -1 : spreadId === 'single' ? 0 : 2; }
+  function keyIndex(spreadId) { return spreadId === 'flow' ? 4 : spreadId === 'single' ? 0 : 2; }
 
   function nuance(spreadId, idx, card, rev) {
     var k = face(card, rev).k[0];
@@ -292,6 +309,12 @@
         ? (ra ? '兩個選項都是逆位，兩條路各有要面對的課題，也許先別急著選，或想想有沒有第三種可能。' : '兩個選項都是正位，兩條路都走得通，關鍵在於哪一條更貼近你在意的事。')
         : '就目前的能量來看，選項 ' + (ra ? 'B' : 'A') + ' 走起來比較順，選項 ' + (ra ? 'A' : 'B') + ' 則需要先處理一些課題。');
       summary.push('牌不替你做決定，它幫你看清每條路的樣子，最後仍由你選擇。');
+    } else if (input.spread === 'single') {
+      summary.push('這次抽到「' + cards[0].card.name + '」' + (cards[0].rev ? '逆位' : '正位') + '，關鍵詞是「' + ks[0] + '」。' +
+        (cards[0].rev ? '逆位代表這股能量受阻或還在醞釀，先留意卡住的地方，慢一點再決定也沒關係。' : '正位代表這股能量正清楚地出現在你的處境裡，先想想它對應到生活中的哪個部分。'));
+      summary.push(cards[0].card.suit === 'major'
+        ? '這是一張大阿爾克那，代表這個問題背後可能有比較深的課題，值得多花一點時間想想。'
+        : '這是一張' + T.SUITS[cards[0].card.suit].name + '牌，重點落在「' + T.SUITS[cards[0].card.suit].theme + '」，答案多半藏在日常的小選擇裡。');
     } else {
       summary.push('從過去的「' + ks[0] + '」，走到現在的「' + ks[1] + '」，未來可能朝向「' + ks[2] + '」。需要留意「' + ks[3] + '」，' +
         (cards[4].rev ? '行動上先調整「' + ks[4] + '」。' : '行動上可以朝「' + ks[4] + '」前進。'));
@@ -299,7 +322,9 @@
 
     var all = NUM[n] ? NUM[n] + '張' : '全部';
     var majors = cards.filter(function (x) { return x.card.suit === 'major'; });
-    if (majors.length === 0) {
+    if (n === 1) {
+      // 單張牌的摘要已在上方說明牌組與正逆位
+    } else if (majors.length === 0) {
       summary.push(all + '都是小阿爾克那，事情多半落在日常可以調整的範圍，小小的改變就能帶來不同。');
     } else if (majors.length === 1) {
       summary.push('「' + majors[0].card.name + '」是這次唯一的大阿爾克那，它所在的位置是值得你特別花心思的關鍵。');
@@ -308,7 +333,9 @@
     }
 
     var revCount = cards.filter(function (x) { return x.rev; }).length;
-    if (n === 3) {
+    if (n === 1) {
+      // 不另外加正逆位統計
+    } else if (n === 3) {
       summary.push([
         '三張都是正位，能量流動得比較順，適合把想法化為行動。',
         '有一張逆位，提醒你在某個環節放慢腳步、回頭檢查。',

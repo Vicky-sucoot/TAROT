@@ -1,6 +1,7 @@
 // 新功能驗收：今日指引、牌卡圖鑑、二選一與時間之流牌陣、個人統計、結果卡加強
 // 使用：先啟動靜態伺服器（python3 -m http.server 8123），再執行 node tests/features.cjs
 const { chromium, devices } = require('playwright');
+const { skipOnboarding } = require('./helpers.cjs');
 const fs = require('fs');
 const path = require('path');
 
@@ -37,7 +38,7 @@ async function pngSize(page) {
 }
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = skipOnboarding(await chromium.launch());
   const ctx = await browser.newContext({ ...devices['iPhone 13'], acceptDownloads: true });
   const page = await ctx.newPage();
   const errors = [];

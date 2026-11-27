@@ -1,6 +1,7 @@
 // 今日指引用語、分享預覽、淺色主題、牌陣說明驗收
 // 使用：先啟動靜態伺服器（python3 -m http.server 8123），再執行 node tests/polish.cjs
 const { chromium, devices } = require('playwright');
+const { skipOnboarding } = require('./helpers.cjs');
 const fs = require('fs');
 const path = require('path');
 
@@ -16,7 +17,7 @@ function contrast(a, b) { const l1 = lum(a), l2 = lum(b); return (Math.max(l1, l
 const parse = (s) => s.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number);
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = skipOnboarding(await chromium.launch());
   const ctx = await browser.newContext({ ...devices['iPhone 13'] });
   const page = await ctx.newPage();
   const errors = [];

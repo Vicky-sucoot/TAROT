@@ -8,6 +8,8 @@
   var KEY_DAILY = 'yuexia.daily';
   var KEY_DAILY_LOG = 'yuexia.dailyLog';
   var KEY_THEME = 'yuexia.theme';
+  var KEY_REVERSALS = 'yuexia.reversals';
+  var KEY_ONBOARDED = 'yuexia.onboarded';
   var PALETTES = ['wine', 'parchment', 'navy'];
   var memory = {};
 
@@ -64,7 +66,7 @@
     all: function () { return loadHistory(); },
     // 清除本網站在這台裝置上保存的所有資料
     clearAll: function () {
-      [KEY_HISTORY, KEY_PALETTE, KEY_FORMAT, KEY_DATE, KEY_DAILY, KEY_DAILY_LOG, KEY_THEME].forEach(function (k) {
+      [KEY_HISTORY, KEY_PALETTE, KEY_FORMAT, KEY_DATE, KEY_DAILY, KEY_DAILY_LOG, KEY_THEME, KEY_REVERSALS, KEY_ONBOARDED].forEach(function (k) {
         delete memory[k];
         try { root.localStorage.removeItem(k); } catch (e) { /* 忽略 */ }
       });
@@ -85,6 +87,12 @@
       return PALETTES.indexOf(p) >= 0 ? p : 'wine';
     },
     setPalette: function (p) { set(KEY_PALETTE, PALETTES.indexOf(p) >= 0 ? p : 'wine'); },
+    // 抽牌時是否使用逆位（預設使用）
+    getReversals: function () { return get(KEY_REVERSALS) !== '0'; },
+    setReversals: function (on) { set(KEY_REVERSALS, on ? '1' : '0'); },
+    // 第一次使用的導覽是否已看過
+    getOnboarded: function () { return get(KEY_ONBOARDED) === '1'; },
+    setOnboarded: function () { set(KEY_ONBOARDED, '1'); },
     getTheme: function () { var t = get(KEY_THEME); return t === 'light' || t === 'system' ? t : 'dark'; },
     setTheme: function (t) { set(KEY_THEME, t === 'light' || t === 'system' ? t : 'dark'); },
     getCardFormat: function () { return get(KEY_FORMAT) === 'square' ? 'square' : 'portrait'; },

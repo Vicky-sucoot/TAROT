@@ -120,7 +120,8 @@
       palette: ['wine', 'parchment', 'navy'].indexOf(s.palette) >= 0 ? s.palette : null,
       format: s.format === 'square' || s.format === 'portrait' ? s.format : null,
       showDate: typeof s.showDate === 'boolean' ? s.showDate : null,
-      theme: s.theme === 'dark' || s.theme === 'light' || s.theme === 'system' ? s.theme : null
+      theme: s.theme === 'dark' || s.theme === 'light' || s.theme === 'system' ? s.theme : null,
+      reversals: typeof s.reversals === 'boolean' ? s.reversals : null
     };
     return { records: records, skipped: skipped, settings: settings, dailyLog: cleanDailyLog(data.dailyLog), exportedAt: Number(data.exportedAt) || null };
   }
